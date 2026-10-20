@@ -5,6 +5,11 @@ const nextConfig: NextConfig = {
   images: {
     formats: ["image/avif", "image/webp"],
   },
+  async rewrites() {
+    return {
+      beforeFiles: [{ source: "/uploads/:name", destination: "/api/media/:name" }],
+    };
+  },
 };
 
 export default nextConfig;
