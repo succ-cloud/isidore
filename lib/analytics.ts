@@ -202,7 +202,7 @@ function fromCheckout(doc: Record<string, unknown>): StoredCheckout {
   };
 }
 
-async function useMongo() {
+async function mongoReady() {
   return databaseReady();
 }
 
@@ -210,7 +210,7 @@ async function prune() {
   if (Date.now() - prunedAt < 10 * 60 * 1000) return;
   prunedAt = Date.now();
   const cutoff = new Date(Date.now() - retentionDays() * 24 * 60 * 60 * 1000);
-  if (await useMongo()) {
+  if (await mongoReady()) {
     await EventModel.deleteMany({ createdAt: { $lt: cutoff } });
     await CheckoutModel.deleteMany({ updatedAt: { $lt: cutoff }, status: { $in: ["completed", "abandoned"] } });
     return;
@@ -224,7 +224,7 @@ async function prune() {
 export async function sweepAbandoned() {
   const minutes = abandonMinutes();
   const cutoff = new Date(Date.now() - minutes * 60 * 1000);
-  if (await useMongo()) {
+  if (await mongoReady()) {
     const stale = await CheckoutModel.find({
       status: { $in: ["cart", "checkout", "auth"] },
       "items.0": { $exists: true },
@@ -289,7 +289,7 @@ export async function sweepAbandoned() {
 }
 
 async function insertEvent(event: StoredEvent) {
-  if (await useMongo()) {
+  if (await mongoReady()) {
     if (event.type === "order_complete" && event.orderNumber) {
       const existing = await EventModel.exists({ type: "order_complete", orderNumber: event.orderNumber });
       if (existing) return;
@@ -306,7 +306,7 @@ async function insertEvent(event: StoredEvent) {
 }
 
 async function findOpen(sessionId: string) {
-  if (await useMongo()) {
+  if (await mongoReady()) {
     const doc = await CheckoutModel.findOne({ sessionId, status: { $ne: "completed" } }).sort({ updatedAt: -1 }).lean<Record<string, unknown>>();
     return doc ? fromCheckout(doc) : null;
   }
@@ -316,7 +316,7 @@ async function findOpen(sessionId: string) {
 
 async function saveCheckout(checkout: StoredCheckout) {
   const next = { ...checkout, updatedAt: new Date().toISOString() };
-  if (await useMongo()) {
+  if (await mongoReady()) {
     await CheckoutModel.findOneAndUpdate(
       { _id: next.id },
       {
@@ -456,7 +456,7 @@ export async function completeCheckout(sessionId: string | undefined, userId: st
     };
     if (sessionId) await finish(await findOpen(sessionId));
     if (userId) {
-      if (await useMongo()) {
+      if (await mongoReady()) {
         const docs = await CheckoutModel.find({ userId, status: { $ne: "completed" } }).lean<Record<string, unknown>[]>();
         for (const doc of docs) await finish(fromCheckout(doc));
       } else {
@@ -474,7 +474,7 @@ export async function completeCheckout(sessionId: string | undefined, userId: st
 export async function attachSession(sessionId: string | undefined, userId: string) {
   if (!sessionId) return;
   try {
-    if (await useMongo()) {
+    if (await mongoReady()) {
       await EventModel.updateMany({ sessionId, $or: [{ userId: "" }, { userId: null }, { userId: { $exists: false } }] }, { $set: { userId } });
       await CheckoutModel.updateMany({ sessionId }, { $set: { userId } });
       return;
@@ -492,7 +492,7 @@ export async function forgetVisitor(sessionId: string | undefined, userId: strin
   const session = sessionId || "";
   const user = userId || "";
   if (!session && !user) return;
-  if (await useMongo()) {
+  if (await mongoReady()) {
     await EventModel.deleteMany({ $or: [...(session ? [{ sessionId: session }] : []), ...(user ? [{ userId: user }] : [])] });
     await CheckoutModel.deleteMany({ $or: [...(session ? [{ sessionId: session }] : []), ...(user ? [{ userId: user }] : [])] });
     return;
@@ -502,7 +502,7 @@ export async function forgetVisitor(sessionId: string | undefined, userId: strin
 }
 
 async function eventsInRange(from: Date, to: Date) {
-  if (await useMongo()) {
+  if (await mongoReady()) {
     const docs = await EventModel.find({ createdAt: { $gte: from, $lte: to } }).sort({ createdAt: -1 }).limit(20000).lean<Record<string, unknown>[]>();
     return docs.map(fromEvent);
   }
@@ -514,7 +514,7 @@ async function eventsInRange(from: Date, to: Date) {
 }
 
 async function checkoutsInRange(from: Date, to: Date) {
-  if (await useMongo()) {
+  if (await mongoReady()) {
     const docs = await CheckoutModel.find({
       $or: [
         { lastActivityAt: { $gte: from, $lte: to } },
@@ -653,7 +653,7 @@ export async function listCheckouts(input: RangeInput & { status?: string }) {
 export async function getCheckout(id: string) {
   await sweepAbandoned();
   let checkout: StoredCheckout | null = null;
-  if (await useMongo()) {
+  if (await mongoReady()) {
     const doc = await CheckoutModel.findById(id).lean<Record<string, unknown> | null>();
     checkout = doc ? fromCheckout(doc) : null;
   } else {
