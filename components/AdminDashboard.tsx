@@ -4,6 +4,7 @@ import Link from "next/link";
 import { useEffect, useState } from "react";
 import { AdminAnalytics } from "@/components/AdminAnalytics";
 import { useAuth } from "@/context/AuthContext";
+import { layoutForImageCount } from "@/lib/images";
 
 type Category = {
   slug: string;
@@ -11,6 +12,7 @@ type Category = {
   summary: string;
   layout: string;
   image: string;
+  images?: string[];
   active: boolean;
 };
 
@@ -45,7 +47,14 @@ const emptyProduct = {
   image: "",
 };
 
-const emptyCategory = { name: "", summary: "", layout: "grid", image: "", active: true };
+const emptyCategory = { name: "", summary: "", images: [] as string[], active: true };
+
+const layoutNames: Record<string, string> = {
+  solo: "Full photo",
+  split: "Side by side",
+  trio: "Tall photo",
+  grid: "Four-up grid",
+};
 
 type View = "dashboard" | "products" | "categories" | "analytics" | "checkouts";
 type Overview = {
@@ -473,19 +482,49 @@ export function AdminDashboard({ name, email }: { name: string; email: string })
               <textarea value={categoryForm.summary} onChange={(event) => setCategoryForm({ ...categoryForm, summary: event.target.value })} />
             </label>
             <label>
-              Storefront layout
-              <select value={categoryForm.layout} onChange={(event) => setCategoryForm({ ...categoryForm, layout: event.target.value })}>
-                <option value="grid">Grid</option>
-                <option value="stack">Stack</option>
-                <option value="reel">Reel</option>
-                <option value="panel">Panel</option>
-              </select>
+              Photos ({categoryForm.images.length} of 4)
+              <input
+                type="file"
+                accept="image/jpeg,image/png,image/webp"
+                multiple
+                disabled={categoryForm.images.length >= 4}
+                onChange={(event) => {
+                  const files = [...(event.target.files ?? [])].slice(0, 4 - categoryForm.images.length);
+                  event.target.value = "";
+                  for (const file of files) {
+                    void upload(file, (url) =>
+                      setCategoryForm((current) =>
+                        current.images.length >= 4 || current.images.includes(url) ? current : { ...current, images: [...current.images, url] },
+                      ),
+                    );
+                  }
+                }}
+              />
             </label>
-            <label>
-              Image
-              <input type="file" accept="image/jpeg,image/png,image/webp" onChange={(event) => { const file = event.target.files?.[0]; if (file) void upload(file, (url) => setCategoryForm({ ...categoryForm, image: url })); }} />
-            </label>
-            {categoryForm.image ? <img className="admin-preview" src={categoryForm.image} alt="" /> : null}
+            <p>{categoryForm.images.length ? layoutNames[layoutForImageCount(categoryForm.images.length)] : "Add photos to set the homepage layout. One is a full photo, two sit side by side, three use a tall photo, and four fill a grid."}</p>
+            {categoryForm.images.length ? (
+              <div className={`collage admin-collage layout-${layoutForImageCount(categoryForm.images.length)}`} aria-hidden="true">
+                {categoryForm.images.map((src, index) => (
+                  <img key={src} className={`swatch s${index + 1}`} src={src} alt="" />
+                ))}
+              </div>
+            ) : null}
+            {categoryForm.images.length ? (
+              <div className="admin-photos">
+                {categoryForm.images.map((src, index) => (
+                  <span className="admin-photo" key={src}>
+                    <img src={src} alt="" />
+                    <button
+                      type="button"
+                      aria-label={`Remove photo ${index + 1}`}
+                      onClick={() => setCategoryForm((current) => ({ ...current, images: current.images.filter((item) => item !== src) }))}
+                    >
+                      ×
+                    </button>
+                  </span>
+                ))}
+              </div>
+            ) : null}
             <label className="check">
               <input type="checkbox" checked={categoryForm.active} onChange={(event) => setCategoryForm({ ...categoryForm, active: event.target.checked })} />
               Show on the storefront
@@ -507,7 +546,7 @@ export function AdminDashboard({ name, email }: { name: string; email: string })
                 <thead>
                   <tr>
                     <th>Category</th>
-                    <th>Layout</th>
+                    <th>Photos</th>
                     <th>Status</th>
                     <th></th>
                   </tr>
@@ -519,7 +558,7 @@ export function AdminDashboard({ name, email }: { name: string; email: string })
                         <strong>{category.name}</strong>
                         <span>{category.summary}</span>
                       </td>
-                      <td>{category.layout}</td>
+                      <td>{category.images?.length ? `${category.images.length} · ${layoutNames[layoutForImageCount(category.images.length)]}` : "Built-in"}</td>
                       <td>{category.active ? "Visible" : "Hidden"}</td>
                       <td className="admin-actions">
                         <button
@@ -530,8 +569,7 @@ export function AdminDashboard({ name, email }: { name: string; email: string })
                             setCategoryForm({
                               name: category.name,
                               summary: category.summary || "",
-                              layout: category.layout || "grid",
-                              image: category.image || "",
+                              images: category.images?.length ? category.images.slice(0, 4) : category.image?.startsWith("/uploads/") ? [category.image] : [],
                               active: category.active !== false,
                             });
                           }}

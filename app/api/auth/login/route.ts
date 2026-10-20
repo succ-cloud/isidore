@@ -17,7 +17,7 @@ export async function POST(request: Request) {
   const database = await databaseReady();
   const user = await findUserByEmail(email);
   if (!user && !database) {
-    return NextResponse.json({ ok: false, message: "The store database could not be reached. Check the network access list and try again." }, { status: 503 });
+    return NextResponse.json({ ok: false, message: "The store database could not be reached just now. Wait a moment and try again." }, { status: 503 });
   }
   if (!user || !(await verifyPassword(password, user.passwordHash))) {
     return NextResponse.json({ ok: false, message: "That email and password do not match." }, { status: 401 });

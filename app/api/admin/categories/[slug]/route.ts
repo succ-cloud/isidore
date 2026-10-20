@@ -2,10 +2,11 @@ import { NextResponse } from "next/server";
 import { requireAdmin } from "@/lib/admin";
 import { clean } from "@/lib/auth";
 import { databaseReady } from "@/lib/database";
+import { categoryImages, layoutForImageCount } from "@/lib/images";
 import { CategoryModel, ProductModel } from "@/lib/models";
 import { removeUploadedImage } from "@/lib/uploads";
 
-const layouts = new Set(["stack", "reel", "panel", "grid"]);
+const stockLayouts = new Set(["stack", "reel", "panel", "grid"]);
 
 type Params = { params: Promise<{ slug: string }> };
 
@@ -18,14 +19,18 @@ export async function PATCH(request: Request, { params }: Params) {
   const body = await request.json().catch(() => null);
   const name = clean(body?.name, 80);
   if (!name) return NextResponse.json({ message: "A category needs a name." }, { status: 400 });
-  const previousImage = current.image;
+  const previous = [...new Set([...(current.images ?? []), current.image].filter(Boolean))];
+  const images = categoryImages(body?.images);
   current.name = name;
   current.summary = clean(body?.summary, 280);
-  current.layout = layouts.has(body?.layout) ? body.layout : current.layout;
-  current.image = clean(body?.image, 240);
+  current.images = images;
+  current.image = images[0] ?? "";
+  current.layout = images.length ? layoutForImageCount(images.length) : stockLayouts.has(current.layout) ? current.layout : "grid";
   current.active = body?.active !== false;
   await current.save();
-  if (previousImage && previousImage !== current.image) await removeUploadedImage(previousImage);
+  for (const image of previous) {
+    if (image.startsWith("/uploads/") && !images.includes(image)) await removeUploadedImage(image);
+  }
   return NextResponse.json({ category: current });
 }
 
@@ -47,7 +52,8 @@ export async function DELETE(request: Request, { params }: Params) {
     }
     await ProductModel.updateMany({ categorySlug: slug }, { categorySlug: reassignTo });
   }
+  const removed = [...(category.images ?? []), category.image].filter((image) => image?.startsWith("/uploads/"));
   await category.deleteOne();
-  if (category.image) await removeUploadedImage(category.image);
+  for (const image of removed) await removeUploadedImage(image);
   return NextResponse.json({ ok: true });
 }

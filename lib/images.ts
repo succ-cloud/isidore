@@ -19,6 +19,25 @@ export const heroPhotos = {
   trade: "/images/hero-trade.jpg",
 };
 
+export function categoryImages(value: unknown) {
+  if (!Array.isArray(value)) return [];
+  const images: string[] = [];
+  for (const item of value) {
+    const src = String(item ?? "").trim().slice(0, 240);
+    if (!/^\/(uploads|images)\/[A-Za-z0-9._?=-]+$/.test(src) || images.includes(src)) continue;
+    images.push(src);
+    if (images.length === 4) break;
+  }
+  return images;
+}
+
+export function layoutForImageCount(count: number) {
+  if (count <= 1) return "solo" as const;
+  if (count === 2) return "split" as const;
+  if (count === 3) return "trio" as const;
+  return "grid" as const;
+}
+
 export function categoryPhotoSet(slug: string) {
   return categoryPhotos[slug] ?? categoryPhotos.general;
 }

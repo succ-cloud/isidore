@@ -5,7 +5,7 @@ import { categories as staticCategories, products as staticProducts, type Catego
 import { photoFor } from "@/lib/images";
 
 export type LiveProduct = Product & { images?: string[]; stock?: number; active?: boolean };
-export type LiveCategory = Category & { image?: string; active?: boolean };
+export type LiveCategory = Category & { image?: string; images?: string[]; active?: boolean };
 
 type CatalogValue = {
   products: LiveProduct[];

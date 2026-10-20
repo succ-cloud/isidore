@@ -46,8 +46,9 @@ export async function connectMongo() {
   if (!cache.promise) {
     cache.promise = prepareDns(uri)
       .then(() => mongoose.connect(uri, { serverSelectionTimeoutMS: 8000 }))
-      .catch((error) => {
+      .catch(async (error) => {
         cache.promise = null;
+        if (mongoose.connection.readyState !== 0) await mongoose.disconnect().catch(() => undefined);
         throw error;
       });
   }

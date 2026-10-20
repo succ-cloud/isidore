@@ -63,14 +63,19 @@ export function LoginForm() {
       headers: { "Content-Type": "application/json" },
       body: JSON.stringify({ email: form.get("email"), password: form.get("password") }),
     });
-    const data = (await response.json()) as { ok?: boolean; message?: string };
+    const data = (await response.json()) as { ok?: boolean; message?: string; user?: { role?: string } };
     setSending(false);
     if (!response.ok || !data.ok) {
       setMessage(data.message || "Login failed.");
       return;
     }
     await refresh();
-    router.push(params.get("next") || "/account");
+    if (data.user?.role === "admin") {
+      router.push("/admin");
+      return;
+    }
+    const next = params.get("next");
+    router.push(next?.startsWith("/") && !next.startsWith("//") ? next : "/account");
   }
 
   return (

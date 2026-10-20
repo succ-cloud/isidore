@@ -6,6 +6,7 @@ import { mongoEnabled } from "@/lib/mongo";
 
 export type StoreCategory = Category & {
   image: string;
+  images: string[];
   active: boolean;
   createdAt?: string;
   updatedAt?: string;
@@ -25,6 +26,7 @@ type CategoryDoc = {
   summary?: string;
   layout?: Category["layout"];
   image?: string;
+  images?: string[];
   active?: boolean;
   createdAt?: Date;
   updatedAt?: Date;
@@ -60,7 +62,8 @@ function fromCategory(doc: CategoryDoc): StoreCategory {
     name: doc.name,
     summary: doc.summary ?? "",
     layout: doc.layout ?? "grid",
-    image: doc.image ?? "",
+    image: doc.image ?? doc.images?.[0] ?? "",
+    images: (doc.images ?? []).filter(Boolean).slice(0, 4),
     active: doc.active !== false,
     createdAt: stamp(doc.createdAt),
     updatedAt: stamp(doc.updatedAt),
@@ -94,7 +97,7 @@ function fromProduct(doc: ProductDoc): StoreProduct {
 
 function staticCatalog() {
   return {
-    categories: staticCategories.map((category) => ({ ...category, image: photoFor(category.slug, category.slug), active: true })),
+    categories: staticCategories.map((category) => ({ ...category, image: "", images: [], active: true })),
     products: staticProducts.map((product) =>
       fromProduct({
         ...product,

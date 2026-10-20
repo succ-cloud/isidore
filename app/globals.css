@@ -415,11 +415,19 @@ h1, h2, h3, p { overflow-wrap: anywhere; }
   height: 86px;
   background: linear-gradient(transparent, rgba(255, 255, 255, 0.94));
 }
-.layout-stack, .layout-reel { grid-template-columns: 1.15fr 0.85fr; grid-template-rows: 1fr 1fr; }
-.layout-stack .s1, .layout-reel .s1 { grid-row: 1 / span 2; }
+.layout-solo { grid-template-columns: 1fr; grid-template-rows: 1fr; }
+.layout-split { grid-template-columns: 1fr 1fr; grid-template-rows: 1fr; }
+.layout-trio, .layout-stack, .layout-reel { grid-template-columns: 1.15fr 0.85fr; grid-template-rows: 1fr 1fr; }
+.layout-trio .s1, .layout-stack .s1, .layout-reel .s1 { grid-row: 1 / span 2; }
 .layout-panel, .layout-grid { grid-template-columns: 1fr 1fr; grid-template-rows: 1fr 1fr; }
 .layout-panel .s3 { grid-column: 1 / span 2; }
 .layout-panel .s4 { display: none; }
+.admin-collage { height: 148px; }
+.admin-collage::after { display: none; }
+.admin-photos { display: flex; gap: 8px; flex-wrap: wrap; }
+.admin-photo { position: relative; }
+.admin-photo img { width: 72px; height: 54px; object-fit: cover; border-radius: 8px; display: block; }
+.admin-photo button { position: absolute; top: 2px; right: 2px; width: 18px; height: 18px; border: 0; border-radius: 50%; background: var(--navy); color: #fff; font-size: 12px; line-height: 1; cursor: pointer; }
 .swatch { display: block; width: 100%; height: 100%; object-fit: cover; }
 .tone-air-management.s1 { background: linear-gradient(160deg, #8ea4b8, #f4f7fa); }
 .tone-air-management.s2 { background: linear-gradient(#d5dee6, #9aabba); }

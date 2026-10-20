@@ -3,9 +3,8 @@ import { requireAdmin } from "@/lib/admin";
 import { clean } from "@/lib/auth";
 import { slugify } from "@/lib/catalog-store";
 import { databaseReady } from "@/lib/database";
+import { categoryImages, layoutForImageCount } from "@/lib/images";
 import { CategoryModel } from "@/lib/models";
-
-const layouts = new Set(["stack", "reel", "panel", "grid"]);
 
 export async function GET() {
   if (!(await requireAdmin())) return NextResponse.json({ message: "Administrators only." }, { status: 403 });
@@ -20,14 +19,15 @@ export async function POST(request: Request) {
   const body = await request.json().catch(() => null);
   const name = clean(body?.name, 80);
   const summary = clean(body?.summary, 280);
-  const layout = layouts.has(body?.layout) ? body.layout : "grid";
-  const image = clean(body?.image, 240);
+  const images = categoryImages(body?.images);
+  const layout = images.length ? layoutForImageCount(images.length) : "grid";
+  const image = images[0] ?? "";
   if (!name) return NextResponse.json({ message: "A category needs a name." }, { status: 400 });
   const slug = slugify(clean(body?.slug, 80) || name);
   if (!slug) return NextResponse.json({ message: "Use a category name with letters or numbers." }, { status: 400 });
   if (await CategoryModel.exists({ slug })) {
     return NextResponse.json({ message: "A category with that name already exists." }, { status: 409 });
   }
-  const category = await CategoryModel.create({ slug, name, summary, layout, image, active: body?.active !== false });
+  const category = await CategoryModel.create({ slug, name, summary, layout, image, images, active: body?.active !== false });
   return NextResponse.json({ category }, { status: 201 });
 }

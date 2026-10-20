@@ -1,8 +1,19 @@
 "use client";
 
 import Link from "next/link";
-import { useCatalog } from "@/context/CatalogContext";
-import { categoryPhotoSet } from "@/lib/images";
+import { useCatalog, type LiveCategory } from "@/context/CatalogContext";
+import { categoryPhotoSet, layoutForImageCount } from "@/lib/images";
+
+const stockLayouts = new Set(["stack", "reel", "panel", "grid"]);
+
+function collageFor(category: LiveCategory) {
+  const chosen = (category.images ?? []).filter(Boolean).slice(0, 4);
+  if (chosen.length) return { photos: chosen, layout: layoutForImageCount(chosen.length) };
+  return {
+    photos: categoryPhotoSet(category.slug).slice(0, 4),
+    layout: stockLayouts.has(category.layout) ? category.layout : "grid",
+  };
+}
 
 export function CategorySection() {
   const { categories } = useCatalog();
@@ -18,16 +29,19 @@ export function CategorySection() {
       </div>
       <div className="cat-wrap">
         <div className="cat-track">
-          {categories.map((category) => (
+          {categories.map((category) => {
+            const collage = collageFor(category);
+            return (
             <Link key={category.slug} href={`/shop/${category.slug}`} className="cat-card">
-              <span className={`collage layout-${category.layout}`} aria-hidden="true">
-                {(category.image ? [category.image, ...categoryPhotoSet(category.slug)].slice(0, 4) : categoryPhotoSet(category.slug)).map((src, index) => (
+              <span className={`collage layout-${collage.layout}`} aria-hidden="true">
+                {collage.photos.map((src, index) => (
                   <img key={`${src}-${index}`} src={src} alt="" className={`swatch s${index + 1}`} />
                 ))}
               </span>
               <span className="cat-label">{category.name}</span>
             </Link>
-          ))}
+            );
+          })}
         </div>
       </div>
     </section>

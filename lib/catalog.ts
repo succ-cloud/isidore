@@ -2,7 +2,7 @@ export type Category = {
   slug: string;
   name: string;
   summary: string;
-  layout: "stack" | "reel" | "panel" | "grid";
+  layout: "solo" | "split" | "trio" | "grid" | "stack" | "reel" | "panel";
 };
 
 export type Product = {
