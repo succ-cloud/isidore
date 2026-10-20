@@ -1,7 +1,8 @@
 "use client";
 
 import { createContext, useContext, useEffect, useMemo, useState } from "react";
-import { productBySlug } from "@/lib/catalog";
+import { useCatalog } from "@/context/CatalogContext";
+import { track } from "@/lib/track";
 
 export type CartLine = { slug: string; qty: number };
 
@@ -20,6 +21,7 @@ const CartContext = createContext<CartContextValue | null>(null);
 const STORAGE_KEY = "isdore-cart";
 
 export function CartProvider({ children }: { children: React.ReactNode }) {
+  const { productBySlug } = useCatalog();
   const [lines, setLines] = useState<CartLine[]>([]);
   const [ready, setReady] = useState(false);
 
@@ -52,19 +54,32 @@ export function CartProvider({ children }: { children: React.ReactNode }) {
       add: (slug, qty = 1) => {
         setLines((current) => {
           const existing = current.find((line) => line.slug === slug);
-          if (!existing) return [...current, { slug, qty }];
-          return current.map((line) => (line.slug === slug ? { ...line, qty: line.qty + qty } : line));
+          const next = existing
+            ? current.map((line) => (line.slug === slug ? { ...line, qty: line.qty + qty } : line))
+            : [...current, { slug, qty }];
+          queueMicrotask(() => track({ type: "add_to_cart", productSlug: slug, qty, items: next }));
+          return next;
         });
       },
       setQty: (slug, qty) => {
-        setLines((current) =>
-          qty <= 0 ? current.filter((line) => line.slug !== slug) : current.map((line) => (line.slug === slug ? { ...line, qty } : line)),
-        );
+        setLines((current) => {
+          const next = qty <= 0 ? current.filter((line) => line.slug !== slug) : current.map((line) => (line.slug === slug ? { ...line, qty } : line));
+          queueMicrotask(() =>
+            track(qty <= 0 ? { type: "remove_from_cart", productSlug: slug, items: next } : { type: "cart_qty", productSlug: slug, qty, items: next }),
+          );
+          return next;
+        });
       },
-      remove: (slug) => setLines((current) => current.filter((line) => line.slug !== slug)),
+      remove: (slug) => {
+        setLines((current) => {
+          const next = current.filter((line) => line.slug !== slug);
+          queueMicrotask(() => track({ type: "remove_from_cart", productSlug: slug, items: next }));
+          return next;
+        });
+      },
       clear: () => setLines([]),
     };
-  }, [lines, ready]);
+  }, [lines, ready, productBySlug]);
 
   return <CartContext.Provider value={value}>{children}</CartContext.Provider>;
 }

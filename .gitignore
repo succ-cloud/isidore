@@ -7,3 +7,5 @@ out
 data/*.json
 tsconfig.tsbuildinfo
 npm-debug.log*
+public/uploads/*
+!public/uploads/.gitkeep

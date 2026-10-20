@@ -9,6 +9,7 @@
     "lint": "next lint"
   },
   "dependencies": {
+    "mongoose": "^9.11.2",
     "next": "15.5.27",
     "nodemailer": "^6.10.1",
     "react": "^19.1.0",

@@ -1,9 +1,11 @@
 import { NextResponse } from "next/server";
+import { completeCheckout, recordEvent } from "@/lib/analytics";
 import { clean, getSessionUser, isEmail } from "@/lib/auth";
 import { productBySlug } from "@/lib/catalog";
 import { readJson, updateJson } from "@/lib/db";
 import { sendMail } from "@/lib/mail";
 import { site } from "@/lib/site";
+import { consentGranted, currentVisitorId } from "@/lib/visitor";
 
 type OrderItem = { slug: string; name: string; qty: number; price: number };
 type Order = {
@@ -97,6 +99,15 @@ export async function POST(request: Request) {
     });
   } catch (error) {
     console.error("Order email failed", error);
+  }
+
+  const sessionId = (await currentVisitorId()) || undefined;
+  if (await consentGranted()) {
+    const trackedSession = sessionId || crypto.randomUUID();
+    await recordEvent({ type: "order_complete", sessionId: trackedSession, userId: user?.id, orderNumber: order.id, path: "/cart" });
+    await completeCheckout(trackedSession, user?.id, order.id);
+  } else {
+    await completeCheckout(sessionId, user?.id, order.id);
   }
 
   return NextResponse.json({

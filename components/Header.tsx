@@ -7,7 +7,8 @@ import { Logo } from "@/components/Logo";
 import { useAuth } from "@/context/AuthContext";
 import { useCart } from "@/context/CartContext";
 import { useLocation } from "@/context/LocationContext";
-import { branches, categories, products } from "@/lib/catalog";
+import { branches } from "@/lib/catalog";
+import { useCatalog } from "@/context/CatalogContext";
 import { formatRand, site } from "@/lib/site";
 
 const infoLinks = [
@@ -22,6 +23,7 @@ export function Header() {
   const router = useRouter();
   const { count, subtotal } = useCart();
   const { user, logout } = useAuth();
+  const { products, categories } = useCatalog();
   const { branchId, setBranchId } = useLocation();
   const [menuOpen, setMenuOpen] = useState(false);
   const [searchOpen, setSearchOpen] = useState(false);
@@ -73,7 +75,7 @@ export function Header() {
     return products
       .filter((product) => `${product.name} ${product.brand} ${product.summary}`.toLowerCase().includes(needle))
       .slice(0, 6);
-  }, [query]);
+  }, [query, products]);
 
   function submitSearch(event: FormEvent) {
     event.preventDefault();
@@ -82,6 +84,8 @@ export function Header() {
     setSearchOpen(false);
     router.push(`/search?q=${encodeURIComponent(needle)}`);
   }
+
+  if (pathname === "/admin" || pathname.startsWith("/admin/")) return null;
 
   return (
     <header className={`site-header${stuck ? " is-stuck" : ""}`}>
@@ -116,6 +120,11 @@ export function Header() {
             <SearchIcon />
             Search
           </button>
+          {user?.role === "admin" ? (
+            <Link className="quick-link" href="/admin">
+              Admin
+            </Link>
+          ) : null}
           <Link className="quick-link" href={user ? "/account" : "/login"}>
             <UserIcon />
             {user ? "Account" : "Login"}
@@ -312,6 +321,7 @@ export function Header() {
               ) : null}
               <Link href="/careers">Careers</Link>
               <Link href="/solar-solutions">Solar Solutions</Link>
+              {user?.role === "admin" ? <Link href="/admin">Admin</Link> : null}
               <Link href={user ? "/account" : "/login"}>{user ? "Account" : "Login"}</Link>
               {user ? null : <Link href="/register">Register</Link>}
               <Link href="/cart">Cart{count > 0 ? ` (${count})` : ""}</Link>

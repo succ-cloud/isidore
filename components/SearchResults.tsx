@@ -3,11 +3,12 @@
 import Link from "next/link";
 import { useSearchParams } from "next/navigation";
 import { posts } from "@/lib/blog";
-import { products } from "@/lib/catalog";
+import { useCatalog } from "@/context/CatalogContext";
 import { formatRand } from "@/lib/site";
 
 export function SearchResults() {
   const params = useSearchParams();
+  const { products } = useCatalog();
   const query = (params.get("q") || "").trim();
   const needle = query.toLowerCase();
   const foundProducts = needle

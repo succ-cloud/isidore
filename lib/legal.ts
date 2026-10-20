@@ -58,6 +58,18 @@ export const legalPages: Record<string, { title: string; description: string; pa
       "If you create an account, request a quote, check out, or join the mailing list, we store the details you submit so we can answer you and fulfil the order.",
       "We do not sell that list. Mail is only sent for the purpose you signed up for, and you can ask to be removed by emailing the address in the footer.",
       "When email delivery is switched on, messages are sent through the mail host named in the site configuration. Card numbers are not collected on this website.",
+      "Browsing activity is collected only after you allow it. The privacy notice explains the cookie, what is stored, how long it is kept, and how to delete it.",
+    ],
+  },
+  privacy: {
+    title: "Privacy notice",
+    description: "What the store records about visits, carts, and checkouts, and how to delete it.",
+    paragraphs: [
+      "If you allow analytics, this site stores a first-party cookie that identifies the browser. It is not a device fingerprint. The cookie lets us connect page views, searches, cart changes, checkout steps, and a completed order to the same visit.",
+      "Each record can include the event type, the time, the page address, a product or category reference, a short search phrase, the page you came from, and campaign parameters such as utm_source when they are present. After you register or log in, later activity and the earlier activity from that same browser can be linked to your account.",
+      "We do not record passwords, card numbers, authentication tokens, or the street address typed into checkout. Checkout progress stays in this browser so you can resume an order. Cart value shown to staff is calculated from current catalogue prices.",
+      "An open cart or checkout is treated as abandoned only after it has been idle for the period configured on the server, normally 60 minutes. Placing the order marks that checkout complete so it is no longer an open abandonment.",
+      "Visitor events and checkout records are deleted after the retention period configured on the server, normally 180 days. You can decline analytics, or delete the activity already stored for this browser, from this page. Signed-in customers can also delete it from their account. Orders you placed are kept because they are business records, not browsing activity. We do not send recovery emails from this tracking.",
     ],
   },
 };

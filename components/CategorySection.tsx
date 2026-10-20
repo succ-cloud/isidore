@@ -1,8 +1,11 @@
+"use client";
+
 import Link from "next/link";
-import { categories } from "@/lib/catalog";
+import { useCatalog } from "@/context/CatalogContext";
 import { categoryPhotoSet } from "@/lib/images";
 
 export function CategorySection() {
+  const { categories } = useCatalog();
   return (
     <section className="section categories" aria-labelledby="category-title">
       <div className="section-intro">
@@ -18,8 +21,8 @@ export function CategorySection() {
           {categories.map((category) => (
             <Link key={category.slug} href={`/shop/${category.slug}`} className="cat-card">
               <span className={`collage layout-${category.layout}`} aria-hidden="true">
-                {categoryPhotoSet(category.slug).map((src, index) => (
-                  <img key={src} src={src} alt="" className={`swatch s${index + 1}`} />
+                {(category.image ? [category.image, ...categoryPhotoSet(category.slug)].slice(0, 4) : categoryPhotoSet(category.slug)).map((src, index) => (
+                  <img key={`${src}-${index}`} src={src} alt="" className={`swatch s${index + 1}`} />
                 ))}
               </span>
               <span className="cat-label">{category.name}</span>

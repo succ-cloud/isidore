@@ -1,6 +1,7 @@
 import type { Metadata } from "next";
 import Link from "next/link";
 import { notFound } from "next/navigation";
+import { PrivacyControls } from "@/components/PrivacyControls";
 import { legalPages } from "@/lib/legal";
 
 type Props = { params: Promise<{ slug: string }> };
@@ -33,6 +34,7 @@ export default async function LegalPage({ params }: Props) {
       {page.paragraphs.map((paragraph) => (
         <p key={paragraph}>{paragraph}</p>
       ))}
+      {slug === "privacy" ? <PrivacyControls /> : null}
     </article>
   );
 }

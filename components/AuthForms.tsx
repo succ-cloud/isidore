@@ -5,6 +5,47 @@ import { useRouter, useSearchParams } from "next/navigation";
 import { FormEvent, useState } from "react";
 import { useAuth } from "@/context/AuthContext";
 
+function PasswordField({ autoComplete, minLength }: { autoComplete: string; minLength?: number }) {
+  const [visible, setVisible] = useState(false);
+
+  return (
+    <label className="field password-field">
+      Password
+      <span className="password-wrap">
+        <input name="password" type={visible ? "text" : "password"} required minLength={minLength} autoComplete={autoComplete} />
+        <button
+          className="password-toggle"
+          type="button"
+          aria-label={visible ? "Hide password" : "Show password"}
+          aria-pressed={visible}
+          onClick={() => setVisible((current) => !current)}
+        >
+          {visible ? <EyeOffIcon /> : <EyeIcon />}
+        </button>
+      </span>
+    </label>
+  );
+}
+
+function EyeIcon() {
+  return (
+    <svg viewBox="0 0 24 24" aria-hidden="true">
+      <path fill="none" stroke="currentColor" strokeWidth="1.8" d="M2.5 12S6 6.5 12 6.5 21.5 12 21.5 12 18 17.5 12 17.5 2.5 12 2.5 12z" />
+      <circle cx="12" cy="12" r="2.6" fill="none" stroke="currentColor" strokeWidth="1.8" />
+    </svg>
+  );
+}
+
+function EyeOffIcon() {
+  return (
+    <svg viewBox="0 0 24 24" aria-hidden="true">
+      <path fill="none" stroke="currentColor" strokeWidth="1.8" d="M3 4.5 20 19" />
+      <path fill="none" stroke="currentColor" strokeWidth="1.8" d="M9.2 7.2A8 8 0 0 1 12 6.5c6 0 9.5 5.5 9.5 5.5a16 16 0 0 1-3.1 3.4M6.1 8.6C3.8 10.2 2.5 12 2.5 12S6 17.5 12 17.5c1.2 0 2.3-.2 3.3-.6" />
+      <path fill="none" stroke="currentColor" strokeWidth="1.8" d="M10 10.2a2.6 2.6 0 0 0 3.6 3.6" />
+    </svg>
+  );
+}
+
 export function LoginForm() {
   const router = useRouter();
   const params = useSearchParams();
@@ -43,10 +84,7 @@ export function LoginForm() {
           Email
           <input name="email" type="email" required autoComplete="email" />
         </label>
-        <label className="field">
-          Password
-          <input name="password" type="password" required autoComplete="current-password" />
-        </label>
+        <PasswordField autoComplete="current-password" />
         <button className="btn-green" type="submit" disabled={sending}>
           {sending ? "Checking…" : "Login"}
         </button>
@@ -113,10 +151,7 @@ export function RegisterForm() {
           Cellphone
           <input name="phone" autoComplete="tel" />
         </label>
-        <label className="field">
-          Password
-          <input name="password" type="password" required minLength={8} autoComplete="new-password" />
-        </label>
+        <PasswordField autoComplete="new-password" minLength={8} />
         <button className="btn-green" type="submit" disabled={sending}>
           {sending ? "Creating account…" : "Create account"}
         </button>

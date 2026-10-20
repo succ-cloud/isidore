@@ -1,4 +1,7 @@
+"use client";
+
 import Link from "next/link";
+import { usePathname } from "next/navigation";
 import { Logo } from "@/components/Logo";
 import { NewsletterForm } from "@/components/NewsletterForm";
 import { ScrollTop } from "@/components/ScrollTop";
@@ -19,9 +22,13 @@ const legal = [
   { href: "/legal/paia", label: "PAIA Manual" },
   { href: "/legal/internal-processing", label: "Internal Processing Notice" },
   { href: "/legal/external-processing", label: "External Processing Notice" },
+  { href: "/legal/privacy", label: "Privacy notice" },
 ];
 
 export function Footer() {
+  const pathname = usePathname();
+  if (pathname === "/admin" || pathname.startsWith("/admin/")) return null;
+
   return (
     <footer className="site-footer">
       <div className="footer-grid">

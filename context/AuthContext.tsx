@@ -7,6 +7,7 @@ export type SessionUser = {
   name: string;
   email: string;
   phone: string;
+  role: "customer" | "admin";
 };
 
 type AuthContextValue = {
@@ -23,10 +24,19 @@ export function AuthProvider({ children }: { children: React.ReactNode }) {
   const [ready, setReady] = useState(false);
 
   async function refresh() {
-    const response = await fetch("/api/auth/me");
-    const data = (await response.json()) as { user: SessionUser | null };
-    setUser(data.user);
-    setReady(true);
+    try {
+      const response = await fetch("/api/auth/me");
+      if (!response.ok) {
+        setUser(null);
+        return;
+      }
+      const data = (await response.json()) as { user: SessionUser | null };
+      setUser(data.user ?? null);
+    } catch {
+      setUser(null);
+    } finally {
+      setReady(true);
+    }
   }
 
   useEffect(() => {

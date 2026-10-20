@@ -1,22 +1,69 @@
 "use client";
 
 import Link from "next/link";
-import { FormEvent, useState } from "react";
+import { FormEvent, useEffect, useRef, useState } from "react";
 import { ProductArt } from "@/components/ProductArt";
 import { useAuth } from "@/context/AuthContext";
 import { useCart } from "@/context/CartContext";
 import { productBySlug } from "@/lib/catalog";
 import { formatRand, site } from "@/lib/site";
 
+const DRAFT_KEY = "isdore-checkout-draft";
+
+function readDraft() {
+  try {
+    const saved = JSON.parse(localStorage.getItem(DRAFT_KEY) || "{}") as Partial<{
+      name: string;
+      email: string;
+      phone: string;
+      address: string;
+      city: string;
+      paymentMethod: string;
+    }>;
+    return {
+      name: String(saved.name || ""),
+      email: String(saved.email || ""),
+      phone: String(saved.phone || ""),
+      address: String(saved.address || ""),
+      city: String(saved.city || ""),
+      paymentMethod: String(saved.paymentMethod || "PayFast"),
+    };
+  } catch {
+    return { name: "", email: "", phone: "", address: "", city: "", paymentMethod: "PayFast" };
+  }
+}
+
 export function CartView() {
   const { lines, setQty, remove, subtotal, clear } = useCart();
-  const { user } = useAuth();
+  const { user, ready: authReady } = useAuth();
   const [orderId, setOrderId] = useState("");
   const [message, setMessage] = useState("");
   const [error, setError] = useState(false);
   const [sending, setSending] = useState(false);
   const delivery = subtotal === 0 || subtotal >= site.freeDelivery ? 0 : site.deliveryFee;
   const total = subtotal + delivery;
+  const [draft, setDraft] = useState({ name: "", email: "", phone: "", address: "", city: "", paymentMethod: "PayFast" });
+  const [draftReady, setDraftReady] = useState(false);
+  const draftLoaded = useRef(false);
+
+  useEffect(() => {
+    if (!authReady || draftLoaded.current) return;
+    draftLoaded.current = true;
+    const saved = readDraft();
+    setDraft({
+      name: saved.name || user?.name || "",
+      email: saved.email || user?.email || "",
+      phone: saved.phone || user?.phone || "",
+      address: saved.address,
+      city: saved.city,
+      paymentMethod: saved.paymentMethod || "PayFast",
+    });
+    setDraftReady(true);
+  }, [authReady, user]);
+
+  useEffect(() => {
+    if (draftReady) localStorage.setItem(DRAFT_KEY, JSON.stringify(draft));
+  }, [draft, draftReady]);
 
   async function onSubmit(event: FormEvent<HTMLFormElement>) {
     event.preventDefault();
@@ -48,6 +95,7 @@ export function CartView() {
       setOrderId(data.orderId || "");
       setMessage(data.message || "Order placed.");
       clear();
+      localStorage.removeItem(DRAFT_KEY);
     } catch {
       setError(true);
       setMessage("We could not reach the server.");
@@ -129,27 +177,27 @@ export function CartView() {
             </label>
             <label className="field">
               Name
-              <input name="name" required defaultValue={user?.name || ""} autoComplete="name" />
+              <input name="name" required value={draft.name} autoComplete="name" onChange={(event) => setDraft({ ...draft, name: event.target.value })} />
             </label>
             <label className="field">
               Email
-              <input name="email" type="email" required defaultValue={user?.email || ""} autoComplete="email" />
+              <input name="email" type="email" required value={draft.email} autoComplete="email" onChange={(event) => setDraft({ ...draft, email: event.target.value })} />
             </label>
             <label className="field">
               Cellphone
-              <input name="phone" required defaultValue={user?.phone || ""} autoComplete="tel" />
+              <input name="phone" required value={draft.phone} autoComplete="tel" onChange={(event) => setDraft({ ...draft, phone: event.target.value })} />
             </label>
             <label className="field">
               Street address
-              <input name="address" required autoComplete="street-address" />
+              <input name="address" required value={draft.address} autoComplete="street-address" onChange={(event) => setDraft({ ...draft, address: event.target.value })} />
             </label>
             <label className="field">
               City
-              <input name="city" required autoComplete="address-level2" />
+              <input name="city" required value={draft.city} autoComplete="address-level2" onChange={(event) => setDraft({ ...draft, city: event.target.value })} />
             </label>
             <label className="field">
               Payment method
-              <select name="paymentMethod" required defaultValue="PayFast">
+              <select name="paymentMethod" required value={draft.paymentMethod} onChange={(event) => setDraft({ ...draft, paymentMethod: event.target.value })}>
                 <option>PayFast</option>
                 <option>Instant EFT</option>
                 <option>Trade account</option>

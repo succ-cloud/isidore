@@ -1,7 +1,7 @@
 import { createHmac, randomBytes, scrypt, timingSafeEqual } from "crypto";
 import { promisify } from "util";
 import { cookies } from "next/headers";
-import { readJson } from "@/lib/db";
+import { findUserById } from "@/lib/users";
 
 const scryptAsync = promisify(scrypt);
 const COOKIE = "isdore_session";
@@ -12,10 +12,11 @@ export type UserRecord = {
   email: string;
   phone: string;
   passwordHash: string;
+  role?: "customer" | "admin";
   createdAt: string;
 };
 
-export type PublicUser = Pick<UserRecord, "id" | "name" | "email" | "phone">;
+export type PublicUser = Pick<UserRecord, "id" | "name" | "email" | "phone"> & { role: "customer" | "admin" };
 
 function authSecret() {
   const secret = process.env.AUTH_SECRET;
@@ -96,15 +97,14 @@ export const clearedSessionCookie = {
 };
 
 export function toPublicUser(user: UserRecord): PublicUser {
-  return { id: user.id, name: user.name, email: user.email, phone: user.phone };
+  return { id: user.id, name: user.name, email: user.email, phone: user.phone, role: user.role ?? "customer" };
 }
 
 export async function getSessionUser() {
   const jar = await cookies();
   const payload = readSessionToken(jar.get(COOKIE)?.value);
   if (!payload) return null;
-  const users = await readJson<UserRecord[]>("users.json", []);
-  const user = users.find((entry) => entry.id === payload.sub);
+  const user = await findUserById(payload.sub);
   return user ? toPublicUser(user) : null;
 }
 

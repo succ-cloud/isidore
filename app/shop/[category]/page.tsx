@@ -2,17 +2,17 @@ import type { Metadata } from "next";
 import { notFound } from "next/navigation";
 import { Suspense } from "react";
 import { ShopCatalog } from "@/components/ShopCatalog";
-import { categories, categoryBySlug } from "@/lib/catalog";
+import { categoryBySlug } from "@/lib/catalog";
+import { readCatalog } from "@/lib/catalog-store";
 
 type Props = { params: Promise<{ category: string }> };
 
-export function generateStaticParams() {
-  return categories.map((category) => ({ category: category.slug }));
-}
+export const dynamic = "force-dynamic";
 
 export async function generateMetadata({ params }: Props): Promise<Metadata> {
   const { category } = await params;
-  const match = categoryBySlug(category);
+  const catalog = await readCatalog();
+  const match = catalog.categories.find((item) => item.slug === category) || categoryBySlug(category);
   if (!match) return { title: "Shop" };
   return {
     title: match.name,
@@ -23,7 +23,8 @@ export async function generateMetadata({ params }: Props): Promise<Metadata> {
 
 export default async function CategoryPage({ params }: Props) {
   const { category } = await params;
-  const match = categoryBySlug(category);
+  const catalog = await readCatalog();
+  const match = catalog.categories.find((item) => item.slug === category) || categoryBySlug(category);
   if (!match) notFound();
   return (
     <Suspense fallback={<p className="page">Loading {match.name}…</p>}>

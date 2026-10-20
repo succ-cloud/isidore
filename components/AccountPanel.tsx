@@ -18,6 +18,7 @@ export function AccountPanel() {
   const { user, ready, logout } = useAuth();
   const router = useRouter();
   const [orders, setOrders] = useState<Order[]>([]);
+  const [privacyNote, setPrivacyNote] = useState("");
 
   useEffect(() => {
     if (ready && !user) router.replace("/login?next=/account");
@@ -55,6 +56,21 @@ export function AccountPanel() {
       >
         Sign out
       </button>
+      <h2>Browsing activity</h2>
+      <p>You can delete page, search, and cart events linked to this login and this browser. Orders stay on the account.</p>
+      <button
+        className="text-button"
+        type="button"
+        onClick={() => {
+          void fetch("/api/analytics/forget", { method: "POST" })
+            .then((response) => response.json())
+            .then((data: { message?: string }) => setPrivacyNote(data.message || "Browsing activity was deleted."))
+            .catch(() => setPrivacyNote("The activity could not be deleted."));
+        }}
+      >
+        Delete browsing activity
+      </button>
+      {privacyNote ? <p className="form-note">{privacyNote}</p> : null}
       <h2>Orders</h2>
       {orders.length === 0 ? (
         <p>

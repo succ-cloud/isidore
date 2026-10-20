@@ -5,7 +5,8 @@ import { usePathname, useRouter, useSearchParams } from "next/navigation";
 import { useMemo, useState } from "react";
 import { AddToCart } from "@/components/AddToCart";
 import { ProductArt } from "@/components/ProductArt";
-import { brands, categories, categoryBySlug, products } from "@/lib/catalog";
+import { brands } from "@/lib/catalog";
+import { useCatalog } from "@/context/CatalogContext";
 import { formatRand } from "@/lib/site";
 
 export function ShopCatalog({ lockedCategory }: { lockedCategory?: string }) {
@@ -20,6 +21,7 @@ export function ShopCatalog({ lockedCategory }: { lockedCategory?: string }) {
   const query = (params.get("q") || "").trim().toLowerCase();
   const category = lockedCategory || "";
   const [filtersOpen, setFiltersOpen] = useState(false);
+  const { products, categories } = useCatalog();
 
   const filtered = useMemo(() => {
     let list = products.slice();
@@ -36,7 +38,7 @@ export function ShopCatalog({ lockedCategory }: { lockedCategory?: string }) {
     if (sort === "name") list.sort((a, b) => a.name.localeCompare(b.name));
     if (sort === "featured") list.sort((a, b) => Number(b.featured) - Number(a.featured));
     return list;
-  }, [category, selectedBrands, min, max, stockOnly, query, sort]);
+  }, [category, selectedBrands, min, max, stockOnly, query, sort, products]);
 
   function update(next: Record<string, string | null>) {
     const search = new URLSearchParams(params.toString());
@@ -55,7 +57,7 @@ export function ShopCatalog({ lockedCategory }: { lockedCategory?: string }) {
     update({ brand: next.join(",") || null });
   }
 
-  const heading = category ? categoryBySlug(category)?.name || "Shop" : "Shop by product";
+  const heading = category ? categories.find((item) => item.slug === category)?.name || "Shop" : "Shop by product";
 
   return (
     <div className="catalogue">
@@ -143,7 +145,7 @@ export function ShopCatalog({ lockedCategory }: { lockedCategory?: string }) {
             {filtered.map((product) => (
               <article key={product.slug} className="product-card">
                 <Link href={`/product/${product.slug}`}>
-                  <ProductArt category={product.categorySlug} seed={product.slug} alt="" />
+                  <ProductArt category={product.categorySlug} seed={product.slug} image={product.images?.[0]} alt="" />
                 </Link>
                 <p className="brand">{product.brand}</p>
                 <h2>
