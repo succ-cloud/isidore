@@ -1,4 +1,5 @@
 import dns from "dns";
+import tls from "tls";
 import mongoose from "mongoose";
 
 type MongooseCache = {
@@ -39,9 +40,25 @@ async function prepareDns(uri: string) {
   }
 }
 
+let certificatesReady = false;
+
+function trustSystemCertificates() {
+  if (certificatesReady) return;
+  certificatesReady = true;
+  if (typeof tls.getCACertificates !== "function" || typeof tls.setDefaultCACertificates !== "function") return;
+  try {
+    const bundled = tls.getCACertificates("default");
+    const system = tls.getCACertificates("system");
+    tls.setDefaultCACertificates([...new Set([...bundled, ...system])]);
+  } catch {
+    // Keep Node's built-in certificates when the system store cannot be read.
+  }
+}
+
 export async function connectMongo() {
   const uri = process.env.MONGODB_URI;
   if (!uri) return null;
+  trustSystemCertificates();
   if (mongoose.connection.readyState === 1) return mongoose;
   if (!cache.promise) {
     cache.promise = prepareDns(uri)
