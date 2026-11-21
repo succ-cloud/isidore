@@ -4,8 +4,13 @@ import { CategoryModel, ProductModel, UserModel } from "@/lib/models";
 
 let seeded = false;
 
+const retiredCategorySlugs = ["distribution", "general", "switchgear", "transmission", "pumps"];
+
 export async function seedDatabase() {
   if (seeded) return;
+
+  await CategoryModel.deleteMany({ slug: { $in: retiredCategorySlugs } });
+  await ProductModel.deleteMany({ categorySlug: { $in: retiredCategorySlugs } });
 
   if ((await CategoryModel.countDocuments()) === 0) {
     await CategoryModel.insertMany(

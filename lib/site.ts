@@ -7,7 +7,7 @@ export const site = {
   shortName: "Isdore",
   tagline: "solar & electrical supply",
   description:
-    "Isdore Solar supplies solar backup, cable, distribution gear, lighting, and general electrical products for contractors and DIY projects across South Africa.",
+    "Isdore Solar supplies solar backup, cable, lighting, and electrical products for contractors and DIY projects across South Africa.",
   url: process.env.NEXT_PUBLIC_SITE_URL || "http://localhost:3000",
   email: "hello@isdoresolar.example",
   phone: "010 020 0300",

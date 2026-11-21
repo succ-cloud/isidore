@@ -420,14 +420,6 @@ h1, h2, h3, p { overflow-wrap: anywhere; }
 .tone-cable-wire.s2 { background: linear-gradient(#2b2b2b, #f0a000 40%, #1d4e9a 70%, #2e8b45); }
 .tone-cable-wire.s3 { background: linear-gradient(#f7f7f7, #d0d5dc); }
 .tone-cable-wire.s4 { background: #e7d3bf; }
-.tone-distribution.s1 { background: linear-gradient(#e9eef3, #b7c6d4); }
-.tone-distribution.s2 { background: linear-gradient(#f4f4f4, #cfd6df); }
-.tone-distribution.s3 { background: linear-gradient(#ef7a1a, #f2b26b); }
-.tone-distribution.s4 { background: #243044; }
-.tone-general.s1 { background: linear-gradient(#f7f7f7, #d5d8de); }
-.tone-general.s2 { background: repeating-linear-gradient(90deg, #7ac142, #7ac142 10px, #1a1a1a 10px, #1a1a1a 14px); }
-.tone-general.s3 { background: linear-gradient(#cfd5dc, #8d98a6); }
-.tone-general.s4 { background: #1d242c; }
 .tone-solar-backup.s1 { background: linear-gradient(#16386e, #f0c14d); }
 .tone-solar-backup.s2 { background: linear-gradient(#f7f7f7, #9eb4cc); }
 .tone-solar-backup.s3 { background: #12305a; }

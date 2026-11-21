@@ -16,7 +16,7 @@ export default function AboutPage() {
       </p>
       <h1>About {site.name}</h1>
       <p>
-        {site.name} is being built as a trade and retail counter for solar backup, cable, distribution gear, lighting, and the general electrical items a site uses every week.
+        {site.name} is being built as a trade and retail counter for solar backup, cable, lighting, and the electrical items a site uses every week.
       </p>
       <p>
         The phone number and address on this site are placeholders. They will be replaced when the company details are final. Until then, use the contact form and we will answer at the mailbox configured for the site.

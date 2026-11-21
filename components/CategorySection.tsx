@@ -24,7 +24,7 @@ export function CategorySection() {
         <hr />
         <h3>Power your next project with Isdore</h3>
         <p>
-          Solar, cable and wire, distribution, lighting, and the general electrical stock used by contractors and DIY projects.
+          Solar, cable and wire, lighting, HVAC, and the electrical stock used by contractors and DIY projects.
         </p>
       </div>
       <div className="cat-wrap">

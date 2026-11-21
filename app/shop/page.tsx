@@ -4,7 +4,7 @@ import { ShopCatalog } from "@/components/ShopCatalog";
 
 export const metadata: Metadata = {
   title: "Shop by product",
-  description: "Browse solar backup, cable, distribution, lighting, HVAC, and general electrical stock.",
+  description: "Browse solar backup, cable, lighting, HVAC, and electrical stock.",
   alternates: { canonical: "/shop" },
 };
 
