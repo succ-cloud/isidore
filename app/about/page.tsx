@@ -19,7 +19,7 @@ export default function AboutPage() {
         {site.name} is being built as a trade and retail counter for solar backup, cable, distribution gear, lighting, and the general electrical items a site uses every week.
       </p>
       <p>
-        The branch list, phone number, and address on this site are placeholders. They will be replaced when the company details are final. Until then, use the contact form and we will answer at the mailbox configured for the site.
+        The phone number and address on this site are placeholders. They will be replaced when the company details are final. Until then, use the contact form and we will answer at the mailbox configured for the site.
       </p>
       <p>
         Contractors who order often can <Link href="/register">open an account</Link> so collections and invoices stay under one name. Project pricing goes through the <Link href="/quote">quote form</Link>.

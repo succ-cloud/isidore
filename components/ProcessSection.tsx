@@ -14,12 +14,6 @@ const steps = [
     icon: "card",
   },
   {
-    href: "/stores",
-    title: "Store Locator",
-    copy: "Find an Isdore trade counter and check the counter hours.",
-    icon: "pin",
-  },
-  {
     href: "/contact",
     title: "Customer Support",
     copy: "Ask the desk about a product, a specification, or an order.",
@@ -58,14 +52,6 @@ function Icon({ name }: { name: string }) {
       <svg viewBox="0 0 24 24" aria-hidden="true">
         <rect x="3" y="6" width="18" height="12" rx="2" fill="none" stroke="currentColor" strokeWidth="1.6" />
         <path d="M3 10h18" stroke="currentColor" strokeWidth="1.6" />
-      </svg>
-    );
-  }
-  if (name === "pin") {
-    return (
-      <svg viewBox="0 0 24 24" aria-hidden="true">
-        <path d="M12 21s7-6.2 7-11a7 7 0 1 0-14 0c0 4.8 7 11 7 11z" fill="none" stroke="currentColor" strokeWidth="1.6" />
-        <circle cx="12" cy="10" r="2" fill="currentColor" />
       </svg>
     );
   }

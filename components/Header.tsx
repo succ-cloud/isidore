@@ -6,8 +6,6 @@ import { useEffect, useId, useMemo, useState, type FormEvent } from "react";
 import { Logo } from "@/components/Logo";
 import { useAuth } from "@/context/AuthContext";
 import { useCart } from "@/context/CartContext";
-import { useLocation } from "@/context/LocationContext";
-import { branches } from "@/lib/catalog";
 import { useCatalog } from "@/context/CatalogContext";
 import { formatRand, site } from "@/lib/site";
 
@@ -24,15 +22,12 @@ export function Header() {
   const { count, subtotal } = useCart();
   const { user, logout } = useAuth();
   const { products, categories } = useCatalog();
-  const { branchId, setBranchId } = useLocation();
   const [menuOpen, setMenuOpen] = useState(false);
   const [searchOpen, setSearchOpen] = useState(false);
-  const [locationOpen, setLocationOpen] = useState(false);
   const [query, setQuery] = useState("");
   const [stuck, setStuck] = useState(false);
   const [openGroup, setOpenGroup] = useState<string | null>(null);
   const searchId = useId();
-  const branch = branches.find((item) => item.id === branchId);
   const remaining = Math.max(0, site.freeDelivery - subtotal);
 
   useEffect(() => {
@@ -45,24 +40,21 @@ export function Header() {
   useEffect(() => {
     setMenuOpen(false);
     setSearchOpen(false);
-    setLocationOpen(false);
     setOpenGroup(null);
   }, [pathname]);
 
   useEffect(() => {
-    const locked = menuOpen || locationOpen;
-    document.body.style.overflow = locked ? "hidden" : "";
+    document.body.style.overflow = menuOpen ? "hidden" : "";
     return () => {
       document.body.style.overflow = "";
     };
-  }, [menuOpen, locationOpen]);
+  }, [menuOpen]);
 
   useEffect(() => {
     function onKey(event: KeyboardEvent) {
       if (event.key === "Escape") {
         setMenuOpen(false);
         setSearchOpen(false);
-        setLocationOpen(false);
       }
     }
     window.addEventListener("keydown", onKey);
@@ -105,11 +97,6 @@ export function Header() {
         <Link href="/" className="logo-link" aria-label={`${site.name} home`}>
           <Logo />
         </Link>
-
-        <button className="location-btn" type="button" onClick={() => setLocationOpen(true)}>
-          <PinIcon />
-          <span>{branch ? branch.city : "Select location"}</span>
-        </button>
 
         <nav className="quick-nav" aria-label="Quick links">
           <Link className="quick-link" href="/">
@@ -186,15 +173,6 @@ export function Header() {
           Shop by Brand
         </Link>
         <div className="nav-drop">
-          <Link className={pathname.startsWith("/stores") ? "is-active" : ""} href="/stores">
-            Store Locator <Caret />
-          </Link>
-          <div className="drop-panel">
-            <Link href="/stores">Find a branch</Link>
-            <Link href="/stores#hours">Branch hours</Link>
-          </div>
-        </div>
-        <div className="nav-drop">
           <Link href="/about">
             Info <Caret />
           </Link>
@@ -243,43 +221,6 @@ export function Header() {
         </div>
       ) : null}
 
-      {locationOpen ? (
-        <div className="modal-backdrop" onClick={() => setLocationOpen(false)}>
-          <div
-            className="modal"
-            role="dialog"
-            aria-modal="true"
-            aria-labelledby="location-title"
-            onClick={(event) => event.stopPropagation()}
-          >
-            <div className="modal-head">
-              <h2 id="location-title">Select a branch</h2>
-              <button type="button" className="icon-x" onClick={() => setLocationOpen(false)} aria-label="Close">
-                ×
-              </button>
-            </div>
-            <ul className="branch-pick">
-              {branches.map((item) => (
-                <li key={item.id}>
-                  <button
-                    type="button"
-                    className={item.id === branchId ? "is-selected" : ""}
-                    onClick={() => {
-                      setBranchId(item.id);
-                      setLocationOpen(false);
-                    }}
-                  >
-                    <strong>{item.name}</strong>
-                    <span>{item.address}</span>
-                    <span>{item.hours}</span>
-                  </button>
-                </li>
-              ))}
-            </ul>
-          </div>
-        </div>
-      ) : null}
-
       {menuOpen ? (
         <div className="drawer-backdrop" onClick={() => setMenuOpen(false)}>
           <aside className="drawer" role="dialog" aria-modal="true" aria-label="Menu" onClick={(event) => event.stopPropagation()}>
@@ -306,7 +247,6 @@ export function Header() {
                 </div>
               ) : null}
               <Link href="/brands">Shop by Brand</Link>
-              <Link href="/stores">Store Locator</Link>
               <button type="button" className="drawer-group" onClick={() => setOpenGroup(openGroup === "info" ? null : "info")}>
                 Info <Caret />
               </button>
@@ -347,15 +287,6 @@ function TruckIcon() {
       <path d="M3 7h11v8H3zM14 10h4l3 3v2h-7z" fill="none" stroke="currentColor" strokeWidth="1.6" />
       <circle cx="7" cy="17.5" r="1.5" fill="currentColor" />
       <circle cx="17" cy="17.5" r="1.5" fill="currentColor" />
-    </svg>
-  );
-}
-
-function PinIcon() {
-  return (
-    <svg viewBox="0 0 24 24" aria-hidden="true">
-      <path d="M12 21s7-6.2 7-11a7 7 0 1 0-14 0c0 4.8 7 11 7 11z" fill="none" stroke="currentColor" strokeWidth="1.8" />
-      <circle cx="12" cy="10" r="2.2" fill="currentColor" />
     </svg>
   );
 }

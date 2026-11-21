@@ -11,7 +11,6 @@ export default function sitemap(): MetadataRoute.Sitemap {
     "/promotions",
     "/shop",
     "/brands",
-    "/stores",
     "/careers",
     "/about",
     "/contact",
