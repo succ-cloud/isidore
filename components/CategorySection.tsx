@@ -1,9 +1,12 @@
 "use client";
 
 import Link from "next/link";
+import { useRouter } from "next/navigation";
 import { useRef } from "react";
-import { useCatalog, type LiveCategory } from "@/context/CatalogContext";
-import { categoryPhotoSet } from "@/lib/images";
+import { useCart } from "@/context/CartContext";
+import { useCatalog, type LiveCategory, type LiveProduct } from "@/context/CatalogContext";
+import { categoryPhotoSet, photoFor } from "@/lib/images";
+import { formatRand } from "@/lib/site";
 
 const featuredSlugs = ["solar-backup", "cable-wire", "lighting"];
 
@@ -12,9 +15,20 @@ function coverFor(category: LiveCategory) {
   return chosen[0] || categoryPhotoSet(category.slug)[0];
 }
 
+function savings(product: LiveProduct) {
+  if (!product.compareAt || product.compareAt <= product.price) return null;
+  const amount = product.compareAt - product.price;
+  return { amount, percent: Math.round((amount / product.compareAt) * 100) };
+}
+
 export function CategorySection() {
-  const { categories } = useCatalog();
+  const { categories, products } = useCatalog();
+  const { add } = useCart();
+  const router = useRouter();
   const rail = useRef<HTMLUListElement>(null);
+  const discounted = products.filter((product) => product.inStock && savings(product));
+  const priced = products.filter((product) => product.inStock && !savings(product));
+  const offers = [...discounted, ...priced].slice(0, 4);
   const featured = featuredSlugs
     .map((slug) => categories.find((category) => category.slug === slug))
     .filter((category): category is LiveCategory => Boolean(category));
@@ -84,6 +98,49 @@ export function CategorySection() {
               </button>
             </div>
           </div>
+        </div>
+      ) : null}
+
+      {offers.length ? (
+        <div className="cat-offers">
+          <div className="cat-offers-head">
+            <p className="cat-kicker">Ready to order</p>
+            <h2>Prices on the counter</h2>
+          </div>
+          <ul className="cat-offer-grid">
+            {offers.map((product) => {
+              const deal = savings(product);
+              const image = product.images?.[0] || photoFor(product.categorySlug, product.slug);
+              return (
+                <li key={product.slug}>
+                  <article className="offer-card">
+                    <Link href={`/product/${product.slug}`} className="cat-photo">
+                      <img src={image} alt="" />
+                      {deal ? <span className="offer-badge">Save {deal.percent}%</span> : null}
+                    </Link>
+                    <h3>
+                      <Link href={`/product/${product.slug}`}>{product.name}</Link>
+                    </h3>
+                    <p className="offer-price">
+                      <strong>{formatRand(product.price)}</strong>
+                      {deal ? <s>{formatRand(product.compareAt ?? 0)}</s> : null}
+                    </p>
+                    <p className="offer-save">{deal ? `Discount ${formatRand(deal.amount)}` : "Listed price"}</p>
+                    <button
+                      className="btn-green"
+                      type="button"
+                      onClick={() => {
+                        add(product.slug, 1);
+                        router.push("/cart");
+                      }}
+                    >
+                      Place an order
+                    </button>
+                  </article>
+                </li>
+              );
+            })}
+          </ul>
         </div>
       ) : null}
     </section>
