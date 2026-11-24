@@ -828,6 +828,18 @@ h1, h2, h3, p { overflow-wrap: anywhere; }
 .admin-pager, .admin-search, .admin-actions { display: flex; gap: 8px; align-items: center; flex-wrap: wrap; }
 .admin-grid { display: grid; grid-template-columns: minmax(240px, 300px) minmax(0, 1fr); gap: 12px; align-items: start; }
 .admin-stack { display: grid; gap: 12px; }
+.category-board { align-items: start; }
+.category-board .admin-stack { position: sticky; top: 16px; }
+.category-panel { max-height: calc(100vh - 110px); grid-template-rows: auto minmax(0, 1fr); overflow: hidden; }
+.category-scroll { min-height: 0; overflow-y: auto; overscroll-behavior: contain; padding-right: 4px; }
+.category-list, .subcategory-list { list-style: none; margin: 0; padding: 0; }
+.category-list { display: grid; gap: 8px; }
+.category-row { border: 1px solid var(--line); border-radius: 10px; padding: 10px 12px; }
+.category-row-head, .subcategory-list li { display: flex; justify-content: space-between; gap: 8px; align-items: flex-start; }
+.category-row-head strong, .subcategory-list strong { display: block; color: var(--navy); }
+.category-row-head span, .subcategory-list small { display: block; color: var(--muted); font-size: 11px; font-weight: 500; }
+.subcategory-list { margin-top: 8px; padding-left: 12px; border-left: 2px solid var(--line); display: grid; gap: 8px; }
+.subcategory-empty { color: var(--muted); font-size: 12px; }
 .admin-card { padding: 14px; display: grid; gap: 8px; }
 .admin-card h2 { font-size: 13px; }
 .admin-card label, .admin-search { display: grid; gap: 4px; font-size: 12px; font-weight: 600; color: var(--navy); }
@@ -868,6 +880,8 @@ h1, h2, h3, p { overflow-wrap: anywhere; }
 }
 @media (max-width: 900px) {
   .admin-grid, .dash-stats, .dash-panels, .dash-stats.cols-4 { grid-template-columns: 1fr; }
+  .category-board .admin-stack { position: static; }
+  .category-panel { max-height: 70vh; }
   .dash-main, .dash.is-open .dash-main, .dash.is-collapsed .dash-main { margin-left: 0; }
   .dash .dash-side, .dash.is-collapsed .dash-side { z-index: 50; width: min(260px, 86vw); transform: translateX(-105%); }
   .dash.is-open .dash-side { transform: translateX(0); box-shadow: var(--shadow); }

@@ -561,7 +561,7 @@ export function AdminDashboard({ name, email }: { name: string; email: string })
           {view === "analytics" ? <AdminAnalytics mode="analytics" /> : null}
           {view === "checkouts" ? <AdminAnalytics mode="checkouts" /> : null}
           {view === "categories" ? (
-        <div className="admin-grid">
+        <div className="admin-grid category-board">
           <div className="admin-stack">
           <form className="form-card admin-card" onSubmit={saveCategory}>
             <h2>{editingCategory ? "Edit category" : "Add category"}</h2>
@@ -645,7 +645,7 @@ export function AdminDashboard({ name, email }: { name: string; email: string })
             <button className="btn-green" type="submit">Add subcategory</button>
           </form>
           </div>
-          <div className="admin-card">
+          <div className="admin-card category-panel">
             <label>
               When deleting a category that still has products, move them to
               <select value={reassign} onChange={(event) => setReassign(event.target.value)}>
@@ -655,77 +655,55 @@ export function AdminDashboard({ name, email }: { name: string; email: string })
                 ))}
               </select>
             </label>
-            <div className="admin-table-wrap">
-              <table className="admin-table">
-                <thead>
-                  <tr>
-                    <th>Category</th>
-                    <th>Photos</th>
-                    <th>Status</th>
-                    <th></th>
-                  </tr>
-                </thead>
-                <tbody>
-                  {categories.map((category) => (
-                    <tr key={category.slug}>
-                      <td>
-                        <strong>{category.name}</strong>
-                        <span>{category.summary}</span>
-                      </td>
-                      <td>{category.images?.length ? `${category.images.length} · ${layoutNames[layoutForImageCount(category.images.length)]}` : "Built-in"}</td>
-                      <td>{category.active ? "Visible" : "Hidden"}</td>
-                      <td className="admin-actions">
-                        <button
-                          className="text-button"
-                          type="button"
-                          onClick={() => {
-                            setEditingCategory(category.slug);
-                            setCategoryForm({
-                              name: category.name,
-                              summary: category.summary || "",
-                              images: category.images?.length ? category.images.slice(0, 4) : category.image?.startsWith("/uploads/") ? [category.image] : [],
-                              active: category.active !== false,
-                            });
-                          }}
-                        >
-                          Edit
-                        </button>
-                        <button className="text-button" type="button" onClick={() => void removeCategory(category)}>
-                          Delete
-                        </button>
-                      </td>
-                    </tr>
-                  ))}
-                </tbody>
-              </table>
-            </div>
-            <h2>Subcategories</h2>
-            <div className="admin-table-wrap">
-              <table className="admin-table">
-                <thead>
-                  <tr>
-                    <th>Subcategory</th>
-                    <th>Main category</th>
-                    <th></th>
-                  </tr>
-                </thead>
-                <tbody>
-                  {subcategories.map((item) => (
-                    <tr key={item.slug}>
-                      <td>
-                        <strong>{item.name}</strong>
-                        <span>{item.summary}</span>
-                      </td>
-                      <td>{categories.find((category) => category.slug === item.categorySlug)?.name || item.categorySlug}</td>
-                      <td className="admin-actions">
-                        <button className="text-button" type="button" onClick={() => void removeSubcategory(item)}>
-                          Delete
-                        </button>
-                      </td>
-                    </tr>
-                  ))}
-                </tbody>
-              </table>
+            <div className="category-scroll">
+              <ul className="category-list">
+                {categories.map((category) => {
+                  const groups = subcategories.filter((item) => item.categorySlug === category.slug);
+                  return (
+                    <li className="category-row" key={category.slug}>
+                      <div className="category-row-head">
+                        <div>
+                          <strong>{category.name}</strong>
+                          <span>{category.summary || (category.active ? "Visible" : "Hidden")}</span>
+                        </div>
+                        <div className="admin-actions">
+                          <button
+                            className="text-button"
+                            type="button"
+                            onClick={() => {
+                              setEditingCategory(category.slug);
+                              setCategoryForm({
+                                name: category.name,
+                                summary: category.summary || "",
+                                images: category.images?.length ? category.images.slice(0, 4) : category.image?.startsWith("/uploads/") ? [category.image] : [],
+                                active: category.active !== false,
+                              });
+                            }}
+                          >
+                            Edit
+                          </button>
+                          <button className="text-button" type="button" onClick={() => void removeCategory(category)}>
+                            Delete
+                          </button>
+                        </div>
+                      </div>
+                      <ul className="subcategory-list">
+                        {groups.length ? groups.map((item) => (
+                          <li key={item.slug}>
+                            <span>
+                              <strong>{item.name}</strong>
+                              {item.summary ? <small>{item.summary}</small> : null}
+                            </span>
+                            <button className="text-button" type="button" onClick={() => void removeSubcategory(item)}>
+                              Delete
+                            </button>
+                          </li>
+                        )) : <li className="subcategory-empty">No subcategories yet</li>}
+                      </ul>
+                    </li>
+                  );
+                })}
+              </ul>
             </div>
           </div>
         </div>
