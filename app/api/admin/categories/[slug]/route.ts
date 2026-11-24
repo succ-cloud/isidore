@@ -3,7 +3,7 @@ import { requireAdmin } from "@/lib/admin";
 import { clean } from "@/lib/auth";
 import { databaseReady } from "@/lib/database";
 import { categoryImages, layoutForImageCount } from "@/lib/images";
-import { CategoryModel, ProductModel } from "@/lib/models";
+import { CategoryModel, ProductModel, SubcategoryModel } from "@/lib/models";
 import { removeUploadedImage } from "@/lib/uploads";
 
 const stockLayouts = new Set(["stack", "reel", "panel", "grid"]);
@@ -44,14 +44,16 @@ export async function DELETE(request: Request, { params }: Params) {
   const reassignTo = clean(body?.reassignTo, 80);
   const productCount = await ProductModel.countDocuments({ categorySlug: slug });
   if (productCount > 0) {
-    if (!reassignTo || reassignTo === slug || !(await CategoryModel.exists({ slug: reassignTo }))) {
+    const destination = reassignTo ? await SubcategoryModel.findOne({ categorySlug: reassignTo }).sort({ name: 1 }) : null;
+    if (!reassignTo || reassignTo === slug || !(await CategoryModel.exists({ slug: reassignTo })) || !destination) {
       return NextResponse.json(
-        { message: "Move the products in this category to another category before deleting it.", productCount },
+        { message: "Move the products to another category that already has a subcategory.", productCount },
         { status: 409 },
       );
     }
-    await ProductModel.updateMany({ categorySlug: slug }, { categorySlug: reassignTo });
+    await ProductModel.updateMany({ categorySlug: slug }, { categorySlug: reassignTo, subcategorySlug: destination.slug });
   }
+  await SubcategoryModel.deleteMany({ categorySlug: slug });
   const removed = [...(category.images ?? []), category.image].filter((image) => image?.startsWith("/uploads/"));
   await category.deleteOne();
   for (const image of removed) await removeUploadedImage(image);

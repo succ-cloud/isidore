@@ -5,10 +5,18 @@ export type Category = {
   layout: "solo" | "split" | "trio" | "grid" | "stack" | "reel" | "panel";
 };
 
+export type Subcategory = {
+  slug: string;
+  name: string;
+  categorySlug: string;
+  summary: string;
+};
+
 export type Product = {
   slug: string;
   name: string;
   categorySlug: string;
+  subcategorySlug: string;
   brand: string;
   price: number;
   compareAt?: number;
@@ -66,6 +74,22 @@ export const categories: Category[] = [
   },
 ];
 
+export const subcategories: Subcategory[] = [
+  { slug: "solar-inverters", name: "Solar inverters", categorySlug: "solar-backup", summary: "Hybrid and backup inverters." },
+  { slug: "solar-battery", name: "Solar battery", categorySlug: "solar-backup", summary: "Batteries for evening and backup loads." },
+  { slug: "solar-panels", name: "Solar panels", categorySlug: "solar-backup", summary: "Modules for roof arrays." },
+  { slug: "solar-isolation", name: "Solar isolation", categorySlug: "solar-backup", summary: "Isolators for PV strings." },
+  { slug: "building-wire", name: "Building wire", categorySlug: "cable-wire", summary: "Twin and earth for circuits inside the building." },
+  { slug: "solar-cable", name: "Solar cable", categorySlug: "cable-wire", summary: "UV-resistant cable for array runs." },
+  { slug: "armoured-cable", name: "Armoured cable", categorySlug: "cable-wire", summary: "Steel-wire armoured cable for submains." },
+  { slug: "highbay-lighting", name: "Highbay lighting", categorySlug: "lighting", summary: "Highbay fittings for tall indoor spaces." },
+  { slug: "air-conditioners", name: "Air conditioners", categorySlug: "air-management", summary: "Split systems for rooms and offices." },
+  { slug: "ventilation", name: "Ventilation", categorySlug: "air-management", summary: "Extractors for bathrooms and sculleries." },
+  { slug: "testers", name: "Testers", categorySlug: "meters", summary: "Meters for checking a circuit." },
+  { slug: "cameras", name: "Cameras", categorySlug: "security", summary: "Cameras for entrances and yards." },
+  { slug: "sockets", name: "Sockets", categorySlug: "switches", summary: "Socket outlets and plates." },
+];
+
 export const brands = ["Helioform", "Copperline", "Cleararc", "Northbeam", "Yardline", "Braketec"];
 
 export const products: Product[] = [
@@ -73,6 +97,7 @@ export const products: Product[] = [
     slug: "helioform-5kw-hybrid-inverter",
     name: "Helioform 5kW Hybrid Inverter",
     categorySlug: "solar-backup",
+    subcategorySlug: "solar-inverters",
     brand: "Helioform",
     price: 14500,
     compareAt: 15900,
@@ -93,6 +118,7 @@ export const products: Product[] = [
     slug: "helioform-51kwh-wall-battery",
     name: "Helioform 5.1kWh Wall Battery",
     categorySlug: "solar-backup",
+    subcategorySlug: "solar-battery",
     brand: "Helioform",
     price: 18900,
     sku: "IS-BAT-51",
@@ -111,6 +137,7 @@ export const products: Product[] = [
     slug: "northbeam-550w-solar-panel",
     name: "Northbeam 550W Solar Panel",
     categorySlug: "solar-backup",
+    subcategorySlug: "solar-panels",
     brand: "Northbeam",
     price: 2150,
     compareAt: 2390,
@@ -130,6 +157,7 @@ export const products: Product[] = [
     slug: "cleararc-dc-isolator",
     name: "Cleararc DC Isolator",
     categorySlug: "solar-backup",
+    subcategorySlug: "solar-isolation",
     brand: "Cleararc",
     price: 420,
     sku: "IS-ISO-DC",
@@ -146,6 +174,7 @@ export const products: Product[] = [
     slug: "copperline-2-5mm-twin-earth-100m",
     name: "Copperline 2.5mm Twin & Earth 100m",
     categorySlug: "cable-wire",
+    subcategorySlug: "building-wire",
     brand: "Copperline",
     price: 1890,
     sku: "IS-CAB-25-100",
@@ -164,6 +193,7 @@ export const products: Product[] = [
     slug: "copperline-6mm-solar-cable-100m",
     name: "Copperline 6mm Solar Cable 100m",
     categorySlug: "cable-wire",
+    subcategorySlug: "solar-cable",
     brand: "Copperline",
     price: 2450,
     sku: "IS-CAB-PV-100",
@@ -182,6 +212,7 @@ export const products: Product[] = [
     slug: "copperline-16mm-armoured-50m",
     name: "Copperline 16mm Armoured Cable 50m",
     categorySlug: "cable-wire",
+    subcategorySlug: "armoured-cable",
     brand: "Copperline",
     price: 6200,
     sku: "IS-CAB-SWA-50",
@@ -199,6 +230,7 @@ export const products: Product[] = [
     slug: "northbeam-150w-highbay",
     name: "Northbeam 150W LED Highbay",
     categorySlug: "lighting",
+    subcategorySlug: "highbay-lighting",
     brand: "Northbeam",
     price: 890,
     compareAt: 1040,
@@ -219,6 +251,7 @@ export const products: Product[] = [
     slug: "braketec-12000-btu-inverter-ac",
     name: "Braketec 12 000 BTU Inverter Air Conditioner",
     categorySlug: "air-management",
+    subcategorySlug: "air-conditioners",
     brand: "Braketec",
     price: 7400,
     sku: "IS-AC-12",
@@ -236,6 +269,7 @@ export const products: Product[] = [
     slug: "braketec-bathroom-extractor",
     name: "Braketec Bathroom Extractor",
     categorySlug: "air-management",
+    subcategorySlug: "ventilation",
     brand: "Braketec",
     price: 310,
     sku: "IS-EX-100",
@@ -252,6 +286,7 @@ export const products: Product[] = [
     slug: "cleararc-digital-multimeter",
     name: "Cleararc Digital Multimeter",
     categorySlug: "meters",
+    subcategorySlug: "testers",
     brand: "Cleararc",
     price: 890,
     sku: "IS-MM-01",
@@ -264,6 +299,7 @@ export const products: Product[] = [
     slug: "northbeam-bullet-camera",
     name: "Northbeam Bullet Camera",
     categorySlug: "security",
+    subcategorySlug: "cameras",
     brand: "Northbeam",
     price: 1450,
     sku: "IS-CAM-01",
@@ -276,6 +312,7 @@ export const products: Product[] = [
     slug: "yardline-double-socket",
     name: "Yardline Double Socket",
     categorySlug: "switches",
+    subcategorySlug: "sockets",
     brand: "Yardline",
     price: 78,
     sku: "IS-SKT-2",
@@ -296,4 +333,8 @@ export function productBySlug(slug: string) {
 
 export function productsInCategory(slug: string) {
   return products.filter((product) => product.categorySlug === slug);
+}
+
+export function subcategoriesInCategory(slug: string) {
+  return subcategories.filter((item) => item.categorySlug === slug);
 }

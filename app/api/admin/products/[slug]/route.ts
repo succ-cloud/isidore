@@ -2,7 +2,7 @@ import { NextResponse } from "next/server";
 import { requireAdmin } from "@/lib/admin";
 import { clean } from "@/lib/auth";
 import { databaseReady } from "@/lib/database";
-import { CategoryModel, ProductModel } from "@/lib/models";
+import { CategoryModel, ProductModel, SubcategoryModel } from "@/lib/models";
 import { removeUploadedImage } from "@/lib/uploads";
 
 type Params = { params: Promise<{ slug: string }> };
@@ -22,16 +22,22 @@ export async function PATCH(request: Request, { params }: Params) {
   if (!body) return NextResponse.json({ message: "We could not read that product." }, { status: 400 });
   const name = clean(body.name, 120);
   const categorySlug = clean(body.categorySlug, 80);
+  const subcategorySlug = clean(body.subcategorySlug, 80);
   const price = numberValue(body.price, -1);
   if (!name) return NextResponse.json({ message: "A product needs a name." }, { status: 400 });
   if (price < 0) return NextResponse.json({ message: "Enter a price of zero or more." }, { status: 400 });
   if (!(await CategoryModel.exists({ slug: categorySlug }))) {
     return NextResponse.json({ message: "Choose a category that exists." }, { status: 400 });
   }
+  const subcategory = await SubcategoryModel.findOne({ slug: subcategorySlug });
+  if (!subcategory || subcategory.categorySlug !== categorySlug) {
+    return NextResponse.json({ message: "Choose a subcategory in that category." }, { status: 400 });
+  }
   const previous = [...(product.images ?? [])];
   const images = Array.isArray(body.images) ? body.images.map((item: unknown) => clean(item, 240)).filter(Boolean).slice(0, 6) : [];
   product.name = name;
   product.categorySlug = categorySlug;
+  product.subcategorySlug = subcategorySlug;
   product.brand = clean(body.brand, 80);
   product.price = price;
   product.compareAt = body.compareAt === "" || body.compareAt == null ? undefined : numberValue(body.compareAt, 0);

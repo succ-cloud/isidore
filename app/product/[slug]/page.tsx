@@ -24,10 +24,11 @@ export async function generateMetadata({ params }: Props): Promise<Metadata> {
 
 export default async function ProductPage({ params }: Props) {
   const { slug } = await params;
-  const { products, categories } = await readCatalog();
+  const { products, categories, subcategories } = await readCatalog();
   const product = products.find((item) => item.slug === slug);
   if (!product) notFound();
   const category = categories.find((item) => item.slug === product.categorySlug);
+  const subcategory = subcategories.find((item) => item.slug === product.subcategorySlug);
   const related = products.filter((item) => item.categorySlug === product.categorySlug && item.slug !== product.slug).slice(0, 3);
 
   return (
@@ -35,11 +36,17 @@ export default async function ProductPage({ params }: Props) {
       <p className="crumbs">
         <Link href="/">Home</Link> / <Link href="/shop">Shop</Link> /{" "}
         <Link href={`/shop/${product.categorySlug}`}>{category?.name}</Link>
+        {subcategory ? (
+          <>
+            {" / "}
+            <Link href={`/shop/${product.categorySlug}?sub=${subcategory.slug}`}>{subcategory.name}</Link>
+          </>
+        ) : null}
       </p>
       <div className="product-layout">
         <ProductArt category={product.categorySlug} seed={product.slug} image={product.images?.[0]} alt={product.name} />
         <div>
-          <p className="brand">{product.brand}</p>
+          <p className="brand">{subcategory ? `${product.brand} · ${subcategory.name}` : product.brand}</p>
           <h1>{product.name}</h1>
           <p className="price">
             {formatRand(product.price)}

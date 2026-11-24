@@ -3,7 +3,7 @@ import { requireAdmin } from "@/lib/admin";
 import { clean } from "@/lib/auth";
 import { slugify } from "@/lib/catalog-store";
 import { databaseReady } from "@/lib/database";
-import { CategoryModel, ProductModel } from "@/lib/models";
+import { CategoryModel, ProductModel, SubcategoryModel } from "@/lib/models";
 
 function numberValue(value: unknown, fallback = 0) {
   const parsed = Number(value);
@@ -13,11 +13,14 @@ function numberValue(value: unknown, fallback = 0) {
 async function productFields(body: Record<string, unknown>, slug: string) {
   const name = clean(body.name, 120);
   const categorySlug = clean(body.categorySlug, 80);
+  const subcategorySlug = clean(body.subcategorySlug, 80);
   const price = numberValue(body.price, -1);
   const stock = Math.max(0, Math.floor(numberValue(body.stock, 0)));
   if (!name) return { error: "A product needs a name." };
   if (price < 0) return { error: "Enter a price of zero or more." };
   if (!(await CategoryModel.exists({ slug: categorySlug }))) return { error: "Choose a category that exists." };
+  const subcategory = await SubcategoryModel.findOne({ slug: subcategorySlug });
+  if (!subcategory || subcategory.categorySlug !== categorySlug) return { error: "Choose a subcategory in that category." };
   const compareAt = body.compareAt === "" || body.compareAt == null ? undefined : numberValue(body.compareAt, -1);
   if (compareAt != null && compareAt < 0) return { error: "The compare price must be zero or more." };
   const images = Array.isArray(body.images) ? body.images.map((item) => clean(item, 240)).filter(Boolean).slice(0, 6) : [];
@@ -26,6 +29,7 @@ async function productFields(body: Record<string, unknown>, slug: string) {
       slug,
       name,
       categorySlug,
+      subcategorySlug,
       brand: clean(body.brand, 80),
       price,
       compareAt,

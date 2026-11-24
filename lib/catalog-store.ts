@@ -1,7 +1,7 @@
-import { categories as staticCategories, products as staticProducts, type Category, type Product } from "@/lib/catalog";
+import { categories as staticCategories, products as staticProducts, subcategories as staticSubcategories, type Category, type Product, type Subcategory } from "@/lib/catalog";
 import { databaseReady } from "@/lib/database";
 import { photoFor } from "@/lib/images";
-import { CategoryModel, ProductModel } from "@/lib/models";
+import { CategoryModel, ProductModel, SubcategoryModel } from "@/lib/models";
 import { mongoEnabled } from "@/lib/mongo";
 
 export type StoreCategory = Category & {
@@ -10,6 +10,10 @@ export type StoreCategory = Category & {
   active: boolean;
   createdAt?: string;
   updatedAt?: string;
+};
+
+export type StoreSubcategory = Subcategory & {
+  active: boolean;
 };
 
 export type StoreProduct = Product & {
@@ -32,10 +36,19 @@ type CategoryDoc = {
   updatedAt?: Date;
 };
 
+type SubcategoryDoc = {
+  slug: string;
+  name: string;
+  categorySlug: string;
+  summary?: string;
+  active?: boolean;
+};
+
 type ProductDoc = {
   slug: string;
   name: string;
   categorySlug: string;
+  subcategorySlug?: string;
   brand?: string;
   price: number;
   compareAt?: number;
@@ -70,6 +83,16 @@ function fromCategory(doc: CategoryDoc): StoreCategory {
   };
 }
 
+function fromSubcategory(doc: SubcategoryDoc): StoreSubcategory {
+  return {
+    slug: doc.slug,
+    name: doc.name,
+    categorySlug: doc.categorySlug,
+    summary: doc.summary ?? "",
+    active: doc.active !== false,
+  };
+}
+
 function fromProduct(doc: ProductDoc): StoreProduct {
   const stock = doc.stock ?? 0;
   const active = doc.active !== false;
@@ -77,6 +100,7 @@ function fromProduct(doc: ProductDoc): StoreProduct {
     slug: doc.slug,
     name: doc.name,
     categorySlug: doc.categorySlug,
+    subcategorySlug: doc.subcategorySlug ?? "",
     brand: doc.brand ?? "",
     price: doc.price,
     compareAt: doc.compareAt,
@@ -98,6 +122,7 @@ function fromProduct(doc: ProductDoc): StoreProduct {
 function staticCatalog() {
   return {
     categories: staticCategories.map((category) => ({ ...category, image: "", images: [], active: true })),
+    subcategories: staticSubcategories.map((item) => ({ ...item, active: true })),
     products: staticProducts.map((product) =>
       fromProduct({
         ...product,
@@ -114,12 +139,14 @@ export async function readCatalog(includeInactive = false) {
   try {
     const ready = await databaseReady();
     if (!ready) return staticCatalog();
-    const [categories, products] = await Promise.all([
+    const [categories, subcategories, products] = await Promise.all([
       CategoryModel.find(includeInactive ? {} : { active: true }).sort({ name: 1 }).lean<CategoryDoc[]>(),
+      SubcategoryModel.find(includeInactive ? {} : { active: true }).sort({ name: 1 }).lean<SubcategoryDoc[]>(),
       ProductModel.find(includeInactive ? {} : { active: true }).sort({ name: 1 }).lean<ProductDoc[]>(),
     ]);
     return {
       categories: categories.map(fromCategory),
+      subcategories: subcategories.map(fromSubcategory),
       products: products.map(fromProduct),
     };
   } catch {

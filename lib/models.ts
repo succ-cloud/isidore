@@ -25,11 +25,23 @@ const CategorySchema = new Schema(
   { timestamps: true },
 );
 
+const SubcategorySchema = new Schema(
+  {
+    slug: { type: String, required: true, unique: true },
+    name: { type: String, required: true },
+    categorySlug: { type: String, required: true, index: true },
+    summary: { type: String, default: "" },
+    active: { type: Boolean, default: true },
+  },
+  { timestamps: true },
+);
+
 const ProductSchema = new Schema(
   {
     slug: { type: String, required: true, unique: true },
     name: { type: String, required: true },
     categorySlug: { type: String, required: true, index: true },
+    subcategorySlug: { type: String, required: true, index: true },
     brand: { type: String, default: "" },
     price: { type: Number, required: true, min: 0 },
     compareAt: { type: Number },
@@ -148,6 +160,7 @@ function compile(name: string, schema: Schema) {
 
 export const UserModel = compile("User", UserSchema);
 export const CategoryModel = compile("Category", CategorySchema);
+export const SubcategoryModel = compile("Subcategory", SubcategorySchema);
 export const ProductModel = compile("Product", ProductSchema);
 export const CartModel = compile("Cart", CartSchema);
 export const OrderModel = compile("Order", OrderSchema);

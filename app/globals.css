@@ -827,6 +827,7 @@ h1, h2, h3, p { overflow-wrap: anywhere; }
 .dash-ring-card { text-align: center; }
 .admin-pager, .admin-search, .admin-actions { display: flex; gap: 8px; align-items: center; flex-wrap: wrap; }
 .admin-grid { display: grid; grid-template-columns: minmax(240px, 300px) minmax(0, 1fr); gap: 12px; align-items: start; }
+.admin-stack { display: grid; gap: 12px; }
 .admin-card { padding: 14px; display: grid; gap: 8px; }
 .admin-card h2 { font-size: 13px; }
 .admin-card label, .admin-search { display: grid; gap: 4px; font-size: 12px; font-weight: 600; color: var(--navy); }

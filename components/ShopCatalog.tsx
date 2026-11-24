@@ -20,12 +20,15 @@ export function ShopCatalog({ lockedCategory }: { lockedCategory?: string }) {
   const sort = params.get("sort") || "featured";
   const query = (params.get("q") || "").trim().toLowerCase();
   const category = lockedCategory || "";
+  const subcategory = params.get("sub") || "";
   const [filtersOpen, setFiltersOpen] = useState(false);
-  const { products, categories } = useCatalog();
+  const { products, categories, subcategories } = useCatalog();
+  const categorySubs = category ? subcategories.filter((item) => item.categorySlug === category) : [];
 
   const filtered = useMemo(() => {
     let list = products.slice();
     if (category) list = list.filter((product) => product.categorySlug === category);
+    if (subcategory) list = list.filter((product) => product.subcategorySlug === subcategory);
     if (selectedBrands.length) list = list.filter((product) => selectedBrands.includes(product.brand));
     if (min > 0) list = list.filter((product) => product.price >= min);
     if (max > 0) list = list.filter((product) => product.price <= max);
@@ -38,7 +41,7 @@ export function ShopCatalog({ lockedCategory }: { lockedCategory?: string }) {
     if (sort === "name") list.sort((a, b) => a.name.localeCompare(b.name));
     if (sort === "featured") list.sort((a, b) => Number(b.featured) - Number(a.featured));
     return list;
-  }, [category, selectedBrands, min, max, stockOnly, query, sort, products]);
+  }, [category, subcategory, selectedBrands, min, max, stockOnly, query, sort, products]);
 
   function update(next: Record<string, string | null>) {
     const search = new URLSearchParams(params.toString());
@@ -77,6 +80,25 @@ export function ShopCatalog({ lockedCategory }: { lockedCategory?: string }) {
             </Link>
           ))}
         </fieldset>
+        {categorySubs.length ? (
+          <fieldset>
+            <legend>Subcategory</legend>
+            {category ? (
+              <Link className={!subcategory ? "is-active" : ""} href={`/shop/${category}`}>
+                All in this category
+              </Link>
+            ) : null}
+            {categorySubs.map((item) => (
+              <Link
+                key={item.slug}
+                className={item.slug === subcategory ? "is-active" : ""}
+                href={category ? `/shop/${category}?sub=${item.slug}` : `/shop?sub=${item.slug}`}
+              >
+                {item.name}
+              </Link>
+            ))}
+          </fieldset>
+        ) : null}
         <fieldset>
           <legend>Brand</legend>
           {brands.map((brand) => (
@@ -142,12 +164,14 @@ export function ShopCatalog({ lockedCategory }: { lockedCategory?: string }) {
           <p className="empty">Nothing matches those filters. Clear them or try another category.</p>
         ) : (
           <div className="product-grid">
-            {filtered.map((product) => (
+            {filtered.map((product) => {
+              const group = subcategories.find((item) => item.slug === product.subcategorySlug);
+              return (
               <article key={product.slug} className="product-card">
                 <Link href={`/product/${product.slug}`}>
                   <ProductArt category={product.categorySlug} seed={product.slug} image={product.images?.[0]} alt="" />
                 </Link>
-                <p className="brand">{product.brand}</p>
+                <p className="brand">{group ? `${product.brand} · ${group.name}` : product.brand}</p>
                 <h2>
                   <Link href={`/product/${product.slug}`}>{product.name}</Link>
                 </h2>
@@ -157,7 +181,8 @@ export function ShopCatalog({ lockedCategory }: { lockedCategory?: string }) {
                 </p>
                 <AddToCart slug={product.slug} disabled={!product.inStock} />
               </article>
-            ))}
+              );
+            })}
           </div>
         )}
       </div>

@@ -1,6 +1,6 @@
-import { categories, products } from "@/lib/catalog";
+import { categories, products, subcategories } from "@/lib/catalog";
 import { categoryPhotoSet, photoFor } from "@/lib/images";
-import { CategoryModel, ProductModel, UserModel } from "@/lib/models";
+import { CategoryModel, ProductModel, SubcategoryModel, UserModel } from "@/lib/models";
 
 let seeded = false;
 
@@ -25,12 +25,21 @@ export async function seedDatabase() {
     );
   }
 
+  for (const item of subcategories) {
+    await SubcategoryModel.updateOne(
+      { slug: item.slug },
+      { $setOnInsert: { slug: item.slug, name: item.name, categorySlug: item.categorySlug, summary: item.summary, active: true } },
+      { upsert: true },
+    );
+  }
+
   if ((await ProductModel.countDocuments()) === 0) {
     await ProductModel.insertMany(
       products.map((product) => ({
         slug: product.slug,
         name: product.name,
         categorySlug: product.categorySlug,
+        subcategorySlug: product.subcategorySlug,
         brand: product.brand,
         price: product.price,
         compareAt: product.compareAt,
@@ -45,6 +54,21 @@ export async function seedDatabase() {
         images: [photoFor(product.categorySlug, product.slug)],
       })),
     );
+  }
+
+  for (const product of products) {
+    await ProductModel.updateOne(
+      { slug: product.slug, $or: [{ subcategorySlug: { $exists: false } }, { subcategorySlug: "" }] },
+      { $set: { subcategorySlug: product.subcategorySlug } },
+    );
+  }
+
+  const unassigned = await ProductModel.find({ $or: [{ subcategorySlug: { $exists: false } }, { subcategorySlug: "" }] });
+  for (const product of unassigned) {
+    const match = await SubcategoryModel.findOne({ categorySlug: product.categorySlug }).sort({ name: 1 });
+    if (!match) continue;
+    product.subcategorySlug = match.slug;
+    await product.save();
   }
 
   const adminEmail = process.env.ADMIN_EMAIL?.trim().toLowerCase();

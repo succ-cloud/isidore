@@ -16,10 +16,19 @@ type Category = {
   active: boolean;
 };
 
+type Subcategory = {
+  slug: string;
+  name: string;
+  categorySlug: string;
+  summary: string;
+  active: boolean;
+};
+
 type Product = {
   slug: string;
   name: string;
   categorySlug: string;
+  subcategorySlug?: string;
   brand: string;
   price: number;
   compareAt?: number;
@@ -40,6 +49,7 @@ const emptyProduct = {
   compareAt: "",
   sku: "",
   categorySlug: "",
+  subcategorySlug: "",
   stock: "0",
   active: true,
   summary: "",
@@ -85,7 +95,9 @@ export function AdminDashboard({ name, email }: { name: string; email: string })
   const [notice, setNotice] = useState("");
   const [error, setError] = useState("");
   const [categories, setCategories] = useState<Category[]>([]);
+  const [subcategories, setSubcategories] = useState<Subcategory[]>([]);
   const [products, setProducts] = useState<Product[]>([]);
+  const [subForm, setSubForm] = useState({ name: "", categorySlug: "", summary: "" });
   const [query, setQuery] = useState("");
   const [page, setPage] = useState(1);
   const [pages, setPages] = useState(1);
@@ -103,6 +115,16 @@ export function AdminDashboard({ name, email }: { name: string; email: string })
       return;
     }
     setCategories(data.categories);
+  }
+
+  async function loadSubcategories() {
+    const response = await fetch("/api/admin/subcategories");
+    const data = await response.json();
+    if (!response.ok) {
+      setError(data.message || "Subcategories could not be loaded.");
+      return;
+    }
+    setSubcategories(data.subcategories);
   }
 
   async function loadProducts(nextPage = page, nextQuery = query) {
@@ -125,6 +147,7 @@ export function AdminDashboard({ name, email }: { name: string; email: string })
 
   useEffect(() => {
     void loadCategories();
+    void loadSubcategories();
     void loadProducts(1, "");
     void fetch("/api/admin/overview")
       .then((response) => response.json())
@@ -174,6 +197,7 @@ export function AdminDashboard({ name, email }: { name: string; email: string })
       compareAt: productForm.compareAt,
       sku: productForm.sku,
       categorySlug: productForm.categorySlug,
+      subcategorySlug: productForm.subcategorySlug,
       stock: Number(productForm.stock),
       active: productForm.active,
       summary: productForm.summary,
@@ -212,6 +236,41 @@ export function AdminDashboard({ name, email }: { name: string; email: string })
     setEditingCategory(null);
     show(editingCategory ? "Category updated." : "Category added.");
     await loadCategories();
+  }
+
+  async function saveSubcategory(event: React.FormEvent) {
+    event.preventDefault();
+    const response = await fetch("/api/admin/subcategories", {
+      method: "POST",
+      headers: { "Content-Type": "application/json" },
+      body: JSON.stringify(subForm),
+    });
+    const data = await response.json();
+    if (!response.ok) {
+      setError(data.message || "The subcategory was not saved.");
+      return;
+    }
+    setSubForm({ name: "", categorySlug: subForm.categorySlug, summary: "" });
+    show("Subcategory added.");
+    await loadSubcategories();
+  }
+
+  async function removeSubcategory(item: Subcategory) {
+    if (!window.confirm(`Delete ${item.name}?`)) return;
+    const fallback = subcategories.find((sub) => sub.categorySlug === item.categorySlug && sub.slug !== item.slug);
+    const response = await fetch(`/api/admin/subcategories/${item.slug}`, {
+      method: "DELETE",
+      headers: { "Content-Type": "application/json" },
+      body: JSON.stringify({ reassignTo: fallback?.slug || "" }),
+    });
+    const data = await response.json();
+    if (!response.ok) {
+      setError(data.message || "The subcategory was not deleted.");
+      return;
+    }
+    show("Subcategory deleted.");
+    await loadSubcategories();
+    await loadProducts();
   }
 
   async function removeProduct(product: Product) {
@@ -342,13 +401,44 @@ export function AdminDashboard({ name, email }: { name: string; email: string })
             </label>
             <label>
               Category
-              <select value={productForm.categorySlug} onChange={(event) => setProductForm({ ...productForm, categorySlug: event.target.value })} required>
+              <select
+                value={productForm.categorySlug}
+                onChange={(event) => {
+                  const categorySlug = event.target.value;
+                  setProductForm((current) => ({
+                    ...current,
+                    categorySlug,
+                    subcategorySlug: subcategories.some((item) => item.slug === current.subcategorySlug && item.categorySlug === categorySlug)
+                      ? current.subcategorySlug
+                      : "",
+                  }));
+                }}
+                required
+              >
                 <option value="">Choose a category</option>
                 {categories.map((category) => (
                   <option key={category.slug} value={category.slug}>
                     {category.name}
                   </option>
                 ))}
+              </select>
+            </label>
+            <label>
+              Subcategory
+              <select
+                value={productForm.subcategorySlug}
+                onChange={(event) => setProductForm({ ...productForm, subcategorySlug: event.target.value })}
+                required
+                disabled={!productForm.categorySlug}
+              >
+                <option value="">{productForm.categorySlug ? "Choose a subcategory" : "Choose a category first"}</option>
+                {subcategories
+                  .filter((item) => item.categorySlug === productForm.categorySlug)
+                  .map((item) => (
+                    <option key={item.slug} value={item.slug}>
+                      {item.name}
+                    </option>
+                  ))}
               </select>
             </label>
             <label>
@@ -440,6 +530,7 @@ export function AdminDashboard({ name, email }: { name: string; email: string })
                               compareAt: product.compareAt ? String(product.compareAt) : "",
                               sku: product.sku || "",
                               categorySlug: product.categorySlug,
+                              subcategorySlug: product.subcategorySlug || "",
                               stock: String(product.stock ?? 0),
                               active: product.active !== false,
                               summary: product.summary || "",
@@ -471,6 +562,7 @@ export function AdminDashboard({ name, email }: { name: string; email: string })
           {view === "checkouts" ? <AdminAnalytics mode="checkouts" /> : null}
           {view === "categories" ? (
         <div className="admin-grid">
+          <div className="admin-stack">
           <form className="form-card admin-card" onSubmit={saveCategory}>
             <h2>{editingCategory ? "Edit category" : "Add category"}</h2>
             <label>
@@ -531,6 +623,28 @@ export function AdminDashboard({ name, email }: { name: string; email: string })
             </label>
             <button className="btn-green" type="submit">{editingCategory ? "Save category" : "Add category"}</button>
           </form>
+          <form className="form-card admin-card" onSubmit={saveSubcategory}>
+            <h2>Add subcategory</h2>
+            <label>
+              Main category
+              <select value={subForm.categorySlug} onChange={(event) => setSubForm({ ...subForm, categorySlug: event.target.value })} required>
+                <option value="">Choose a category</option>
+                {categories.map((category) => (
+                  <option key={category.slug} value={category.slug}>{category.name}</option>
+                ))}
+              </select>
+            </label>
+            <label>
+              Subcategory name
+              <input value={subForm.name} onChange={(event) => setSubForm({ ...subForm, name: event.target.value })} placeholder="Solar battery" required />
+            </label>
+            <label>
+              Description
+              <textarea value={subForm.summary} onChange={(event) => setSubForm({ ...subForm, summary: event.target.value })} />
+            </label>
+            <button className="btn-green" type="submit">Add subcategory</button>
+          </form>
+          </div>
           <div className="admin-card">
             <label>
               When deleting a category that still has products, move them to
@@ -577,6 +691,34 @@ export function AdminDashboard({ name, email }: { name: string; email: string })
                           Edit
                         </button>
                         <button className="text-button" type="button" onClick={() => void removeCategory(category)}>
+                          Delete
+                        </button>
+                      </td>
+                    </tr>
+                  ))}
+                </tbody>
+              </table>
+            </div>
+            <h2>Subcategories</h2>
+            <div className="admin-table-wrap">
+              <table className="admin-table">
+                <thead>
+                  <tr>
+                    <th>Subcategory</th>
+                    <th>Main category</th>
+                    <th></th>
+                  </tr>
+                </thead>
+                <tbody>
+                  {subcategories.map((item) => (
+                    <tr key={item.slug}>
+                      <td>
+                        <strong>{item.name}</strong>
+                        <span>{item.summary}</span>
+                      </td>
+                      <td>{categories.find((category) => category.slug === item.categorySlug)?.name || item.categorySlug}</td>
+                      <td className="admin-actions">
+                        <button className="text-button" type="button" onClick={() => void removeSubcategory(item)}>
                           Delete
                         </button>
                       </td>
