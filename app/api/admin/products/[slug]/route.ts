@@ -48,7 +48,8 @@ export async function PATCH(request: Request, { params }: Params) {
   product.promo = Boolean(body.promo);
   product.summary = clean(body.summary, 280);
   product.description = clean(body.description, 2000);
-  product.images = images;
+  product.set("images", images);
+  product.markModified("images");
   await product.save();
   for (const image of previous) {
     if (!images.includes(image)) await removeUploadedImage(image);

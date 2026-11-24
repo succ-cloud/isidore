@@ -1,7 +1,7 @@
 "use client";
 
 import Link from "next/link";
-import { useEffect, useState } from "react";
+import { useEffect, useRef, useState } from "react";
 import { AdminAnalytics } from "@/components/AdminAnalytics";
 import { useAuth } from "@/context/AuthContext";
 import { layoutForImageCount } from "@/lib/images";
@@ -104,6 +104,9 @@ export function AdminDashboard({ name, email }: { name: string; email: string })
   const [editingProduct, setEditingProduct] = useState<string | null>(null);
   const [editingCategory, setEditingCategory] = useState<string | null>(null);
   const [productForm, setProductForm] = useState(emptyProduct);
+  const [productFileLabel, setProductFileLabel] = useState("");
+  const pendingProductFile = useRef<File | null>(null);
+  const productImageRef = useRef("");
   const [categoryForm, setCategoryForm] = useState(emptyCategory);
   const [reassign, setReassign] = useState("");
 
@@ -175,21 +178,45 @@ export function AdminDashboard({ name, email }: { name: string; email: string })
     setNotice(message);
   }
 
+  function applyProductForm(next: typeof emptyProduct) {
+    if (productImageRef.current.startsWith("blob:")) URL.revokeObjectURL(productImageRef.current);
+    pendingProductFile.current = null;
+    productImageRef.current = next.image;
+    setProductFileLabel("");
+    setProductForm(next);
+  }
+
   async function upload(file: File, assign: (url: string) => void) {
     const body = new FormData();
     body.set("file", file);
     const response = await fetch("/api/admin/images", { method: "POST", body });
-    const data = await response.json();
-    if (!response.ok) {
-      setError(data.message || "The image was not uploaded.");
-      return;
+    const data = await response.json().catch(() => null);
+    if (!response.ok || !data?.url) {
+      setError(data?.message || "The image was not uploaded.");
+      return "";
     }
     assign(data.url);
-    show("Image uploaded.");
+    show("Picture ready. Save to keep it.");
+    return String(data.url);
   }
 
   async function saveProduct(event: React.FormEvent) {
     event.preventDefault();
+    let image = productImageRef.current;
+    const file = pendingProductFile.current;
+    if (file) {
+      const uploaded = await upload(file, (url) => {
+        productImageRef.current = url;
+        setProductForm((current) => ({ ...current, image: url }));
+      });
+      if (!uploaded) return;
+      image = uploaded;
+      pendingProductFile.current = null;
+    }
+    if (image.startsWith("blob:")) {
+      setError("That picture did not upload. Choose it again.");
+      return;
+    }
     const payload = {
       name: productForm.name,
       brand: productForm.brand,
@@ -202,7 +229,7 @@ export function AdminDashboard({ name, email }: { name: string; email: string })
       active: productForm.active,
       summary: productForm.summary,
       description: productForm.description,
-      images: productForm.image ? [productForm.image] : [],
+      images: image ? [image] : [],
     };
     const response = await fetch(editingProduct ? `/api/admin/products/${editingProduct}` : "/api/admin/products", {
       method: editingProduct ? "PATCH" : "POST",
@@ -214,7 +241,7 @@ export function AdminDashboard({ name, email }: { name: string; email: string })
       setError(data.message || "The product was not saved.");
       return;
     }
-    setProductForm(emptyProduct);
+    applyProductForm(emptyProduct);
     setEditingProduct(null);
     show(editingProduct ? "Product updated." : "Product added.");
     await loadProducts();
@@ -392,12 +419,12 @@ export function AdminDashboard({ name, email }: { name: string; email: string })
             </>
           ) : null}
           {view === "products" ? (
-        <div className="admin-grid">
-          <form className="form-card admin-card" onSubmit={saveProduct}>
+        <div className="admin-grid product-board">
+          <form className="form-card admin-card product-form" onSubmit={saveProduct}>
             <h2>{editingProduct ? "Edit product" : "Add product"}</h2>
             <label>
               Name
-              <input value={productForm.name} onChange={(event) => setProductForm({ ...productForm, name: event.target.value })} required />
+              <input value={productForm.name} onChange={(event) => setProductForm((current) => ({ ...current, name: event.target.value }))} required />
             </label>
             <label>
               Category
@@ -427,7 +454,7 @@ export function AdminDashboard({ name, email }: { name: string; email: string })
               Subcategory
               <select
                 value={productForm.subcategorySlug}
-                onChange={(event) => setProductForm({ ...productForm, subcategorySlug: event.target.value })}
+                onChange={(event) => setProductForm((current) => ({ ...current, subcategorySlug: event.target.value }))}
                 required
                 disabled={!productForm.categorySlug}
               >
@@ -443,49 +470,71 @@ export function AdminDashboard({ name, email }: { name: string; email: string })
             </label>
             <label>
               Brand
-              <input value={productForm.brand} onChange={(event) => setProductForm({ ...productForm, brand: event.target.value })} />
+              <input value={productForm.brand} onChange={(event) => setProductForm((current) => ({ ...current, brand: event.target.value }))} />
             </label>
             <label>
               Price (R)
-              <input type="number" min={0} step="0.01" value={productForm.price} onChange={(event) => setProductForm({ ...productForm, price: event.target.value })} required />
+              <input type="number" min={0} step="0.01" value={productForm.price} onChange={(event) => setProductForm((current) => ({ ...current, price: event.target.value }))} required />
             </label>
             <label>
               Compare price (R)
-              <input type="number" min={0} step="0.01" value={productForm.compareAt} onChange={(event) => setProductForm({ ...productForm, compareAt: event.target.value })} />
+              <input type="number" min={0} step="0.01" value={productForm.compareAt} onChange={(event) => setProductForm((current) => ({ ...current, compareAt: event.target.value }))} />
             </label>
             <label>
               SKU
-              <input value={productForm.sku} onChange={(event) => setProductForm({ ...productForm, sku: event.target.value })} />
+              <input value={productForm.sku} onChange={(event) => setProductForm((current) => ({ ...current, sku: event.target.value }))} />
             </label>
             <label>
               Stock
-              <input type="number" min={0} step={1} value={productForm.stock} onChange={(event) => setProductForm({ ...productForm, stock: event.target.value })} required />
+              <input type="number" min={0} step={1} value={productForm.stock} onChange={(event) => setProductForm((current) => ({ ...current, stock: event.target.value }))} required />
             </label>
             <label>
               Short description
-              <textarea value={productForm.summary} onChange={(event) => setProductForm({ ...productForm, summary: event.target.value })} />
+              <textarea value={productForm.summary} onChange={(event) => setProductForm((current) => ({ ...current, summary: event.target.value }))} />
             </label>
             <label>
               Description
-              <textarea value={productForm.description} onChange={(event) => setProductForm({ ...productForm, description: event.target.value })} />
+              <textarea value={productForm.description} onChange={(event) => setProductForm((current) => ({ ...current, description: event.target.value }))} />
             </label>
             <label>
               Image
-              <input type="file" accept="image/jpeg,image/png,image/webp" onChange={(event) => { const file = event.target.files?.[0]; if (file) void upload(file, (url) => setProductForm({ ...productForm, image: url })); }} />
+              <input
+                type="file"
+                accept="image/jpeg,image/png,image/webp,.jpg,.jpeg,.png,.webp"
+                onChange={(event) => {
+                  const file = event.target.files?.[0];
+                  event.target.value = "";
+                  if (!file) return;
+                  if (productImageRef.current.startsWith("blob:")) URL.revokeObjectURL(productImageRef.current);
+                  const preview = URL.createObjectURL(file);
+                  pendingProductFile.current = file;
+                  productImageRef.current = preview;
+                  setProductFileLabel(file.name);
+                  setProductForm((current) => ({ ...current, image: preview }));
+                  void upload(file, (url) => {
+                    if (pendingProductFile.current !== file) return;
+                    pendingProductFile.current = null;
+                    if (productImageRef.current.startsWith("blob:")) URL.revokeObjectURL(productImageRef.current);
+                    productImageRef.current = url;
+                    setProductForm((current) => ({ ...current, image: url }));
+                  });
+                }}
+              />
             </label>
+            {productFileLabel ? <small className="subcategory-empty">{productFileLabel}</small> : null}
             {productForm.image ? <img className="admin-preview" src={productForm.image} alt="" /> : null}
             <label className="check">
-              <input type="checkbox" checked={productForm.active} onChange={(event) => setProductForm({ ...productForm, active: event.target.checked })} />
+              <input type="checkbox" checked={productForm.active} onChange={(event) => setProductForm((current) => ({ ...current, active: event.target.checked }))} />
               Active on the storefront
             </label>
             <button className="btn-green" type="submit">{editingProduct ? "Save product" : "Add product"}</button>
             {editingProduct ? (
-              <button className="text-button" type="button" onClick={() => { setEditingProduct(null); setProductForm(emptyProduct); }}>
+              <button className="text-button" type="button" onClick={() => { setEditingProduct(null); applyProductForm(emptyProduct); }}>
                 Cancel edit
               </button>
             ) : null}
           </form>
-          <div className="admin-card">
+          <div className="admin-card product-panel">
             <form
               className="admin-search"
               onSubmit={(event) => {
@@ -496,6 +545,7 @@ export function AdminDashboard({ name, email }: { name: string; email: string })
               <input value={query} onChange={(event) => setQuery(event.target.value)} placeholder="Search products" aria-label="Search products" />
               <button className="btn-navy" type="submit">Search</button>
             </form>
+            <div className="product-scroll">
             <div className="admin-table-wrap">
               <table className="admin-table">
                 <thead>
@@ -523,7 +573,7 @@ export function AdminDashboard({ name, email }: { name: string; email: string })
                           type="button"
                           onClick={() => {
                             setEditingProduct(product.slug);
-                            setProductForm({
+                            applyProductForm({
                               name: product.name,
                               brand: product.brand || "",
                               price: String(product.price),
@@ -549,6 +599,7 @@ export function AdminDashboard({ name, email }: { name: string; email: string })
                   ))}
                 </tbody>
               </table>
+            </div>
             </div>
             <div className="admin-pager">
               <button className="text-button" type="button" disabled={page <= 1} onClick={() => void loadProducts(page - 1)}>Previous</button>

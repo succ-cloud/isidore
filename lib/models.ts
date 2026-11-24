@@ -36,6 +36,15 @@ const SubcategorySchema = new Schema(
   { timestamps: true },
 );
 
+const UploadSchema = new Schema(
+  {
+    filename: { type: String, required: true, unique: true },
+    mime: { type: String, required: true },
+    data: { type: Buffer, required: true },
+  },
+  { timestamps: true },
+);
+
 const ProductSchema = new Schema(
   {
     slug: { type: String, required: true, unique: true },
@@ -161,6 +170,7 @@ function compile(name: string, schema: Schema) {
 export const UserModel = compile("User", UserSchema);
 export const CategoryModel = compile("Category", CategorySchema);
 export const SubcategoryModel = compile("Subcategory", SubcategorySchema);
+export const UploadModel = compile("Upload", UploadSchema);
 export const ProductModel = compile("Product", ProductSchema);
 export const CartModel = compile("Cart", CartSchema);
 export const OrderModel = compile("Order", OrderSchema);
