@@ -829,7 +829,7 @@ h1, h2, h3, p { overflow-wrap: anywhere; }
 .admin-grid { display: grid; grid-template-columns: minmax(240px, 300px) minmax(0, 1fr); gap: 12px; align-items: start; }
 .admin-stack { display: grid; gap: 12px; }
 .category-board { align-items: start; }
-.category-board .admin-stack { position: sticky; top: 16px; }
+.category-board .admin-stack { position: sticky; top: 16px; max-height: calc(100vh - 110px); overflow-y: auto; overscroll-behavior: contain; padding-right: 4px; }
 .category-panel { max-height: calc(100vh - 110px); grid-template-rows: auto minmax(0, 1fr); overflow: hidden; }
 .category-scroll { min-height: 0; overflow-y: auto; overscroll-behavior: contain; padding-right: 4px; }
 .category-list, .subcategory-list { list-style: none; margin: 0; padding: 0; }
@@ -880,7 +880,7 @@ h1, h2, h3, p { overflow-wrap: anywhere; }
 }
 @media (max-width: 900px) {
   .admin-grid, .dash-stats, .dash-panels, .dash-stats.cols-4 { grid-template-columns: 1fr; }
-  .category-board .admin-stack { position: static; }
+  .category-board .admin-stack { position: static; max-height: 70vh; }
   .category-panel { max-height: 70vh; }
   .dash-main, .dash.is-open .dash-main, .dash.is-collapsed .dash-main { margin-left: 0; }
   .dash .dash-side, .dash.is-collapsed .dash-side { z-index: 50; width: min(260px, 86vw); transform: translateX(-105%); }
