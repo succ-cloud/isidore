@@ -26,8 +26,10 @@ export function CategorySection() {
   const { add } = useCart();
   const router = useRouter();
   const rail = useRef<HTMLUListElement>(null);
-  const discounted = products.filter((product) => product.inStock && savings(product));
-  const priced = products.filter((product) => product.inStock && !savings(product));
+  const categorySlugs = new Set(categories.map((category) => category.slug));
+  const inCategory = products.filter((product) => product.inStock && categorySlugs.has(product.categorySlug));
+  const discounted = inCategory.filter((product) => savings(product));
+  const priced = inCategory.filter((product) => !savings(product));
   const offers = [...discounted, ...priced].slice(0, 4);
   const featured = featuredSlugs
     .map((slug) => categories.find((category) => category.slug === slug))
